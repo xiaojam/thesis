@@ -1,17 +1,25 @@
-package id.go.kemenag.spn.entity;
+package id.go.kemenag.spn.entity.marriage;
 
 import id.go.kemenag.spn.constant.MarriageConstant;
 import id.go.kemenag.spn.entity.base.BaseEntity;
-import jakarta.persistence.Column;
+import jakarta.persistence.*;
 import jakarta.validation.constraints.Size;
+import lombok.*;
 import org.hibernate.annotations.UuidGenerator;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDate;
 import java.util.UUID;
 
-public class GroomMother extends BaseEntity {
+@Data
+@Entity
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
+public class Guardian extends BaseEntity {
 
     @Column
+    @Id
     @UuidGenerator(style = UuidGenerator.Style.AUTO)
     private UUID id;
 
@@ -35,6 +43,9 @@ public class GroomMother extends BaseEntity {
     private LocalDate birthDate;
 
     @Column
+    private MarriageConstant.Gender gender;
+
+    @Column
     private String job;
 
     @Column
@@ -44,7 +55,10 @@ public class GroomMother extends BaseEntity {
     private MarriageConstant.Religion religion;
 
     @Column
-    private boolean deceased;
+    private MarriageConstant.MaritalStatus maritalStatus;
+
+    @Column
+    private String fatherName;
 
     @Column
     private String provinceCode;

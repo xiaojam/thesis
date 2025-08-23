@@ -14,7 +14,7 @@ public class ApplicationConstant {
         DONE,
     }
 
-    public enum ROLE {
+    public enum Role {
         // Petugas Pendaftaran Nikah di Desa
         REGISTRAR,
         // Kepala Desa
@@ -22,14 +22,14 @@ public class ApplicationConstant {
         // Petugas KUA
         OFFICER,
         // Kepala KUA
-        REVIEWER,
+        APPROVER,
         USER,
         SUPER_USER,
     }
 
-    public enum ProcessApproach {
-        SKIP,
-        REPROCESS,
+    public enum Type {
+        MARRIAGE,
+        DIVORCE,
     }
 
     public static final String API_KEY_VALID_ATTRIBUTE = "IS_API_KEY_VALID";

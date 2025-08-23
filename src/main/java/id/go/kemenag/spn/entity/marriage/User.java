@@ -1,26 +1,24 @@
-package id.go.kemenag.spn.entity;
+package id.go.kemenag.spn.entity.marriage;
 
 import id.go.kemenag.spn.constant.ApplicationConstant;
 import id.go.kemenag.spn.entity.base.BaseEntity;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
+import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
-import lombok.Builder;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
+import lombok.*;
 import org.hibernate.annotations.UuidGenerator;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.util.UUID;
 
-//@Data
-//@Builder
-//@EqualsAndHashCode(callSuper = true)
-//@Entity
+@Data
+@Entity
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
 public class User extends BaseEntity {
 
     @Column
+    @Id
     @UuidGenerator(style = UuidGenerator.Style.AUTO)
     private UUID id;
 
@@ -30,7 +28,7 @@ public class User extends BaseEntity {
 
     @Column
     @Enumerated(EnumType.STRING)
-    private ApplicationConstant.ROLE role;
+    private ApplicationConstant.Role role;
 
     @Column
     private String firstName;

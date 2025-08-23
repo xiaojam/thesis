@@ -15,7 +15,7 @@ public class AuthUtil {
         return encoder.matches(plainPassword, hashedPassword);
     }
 
-    public static String hasRole(ApplicationConstant.ROLE role) {
+    public static String hasRole(ApplicationConstant.Role role) {
         return "ROLE_" + role.name();
     }
 }

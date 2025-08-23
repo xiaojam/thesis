@@ -1,4 +1,4 @@
-package id.go.kemenag.spn.dto.previousPartner.request;
+package id.go.kemenag.spn.dto.previouspartner.request;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import id.go.kemenag.spn.constant.MarriageConstant;

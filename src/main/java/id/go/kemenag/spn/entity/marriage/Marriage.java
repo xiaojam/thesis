@@ -1,50 +1,33 @@
-package id.go.kemenag.spn.entity;
+package id.go.kemenag.spn.entity.marriage;
 
-import id.go.kemenag.spn.constant.MarriageConstant;
 import id.go.kemenag.spn.entity.base.BaseEntity;
-import jakarta.persistence.Column;
+import jakarta.persistence.*;
 import jakarta.validation.constraints.Size;
+import lombok.*;
 import org.hibernate.annotations.UuidGenerator;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.UUID;
 
-public class GroomFather extends BaseEntity {
+@Data
+@Entity
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
+public class Marriage extends BaseEntity {
 
     @Column
+    @Id
     @UuidGenerator(style = UuidGenerator.Style.AUTO)
     private UUID id;
 
     @Column
-    private String firstName;
+    private LocalDateTime datetime;
 
+    // Mahar
     @Column
-    private String lastName;
-
-    @Column
-    private String alias;
-
-    @Column
-    @Size(min = 16, max = 16)
-    private String identityId;
-
-    @Column
-    private String birthPlace;
-
-    @Column
-    private LocalDate birthDate;
-
-    @Column
-    private String job;
-
-    @Column
-    private String nationality;
-
-    @Column
-    private MarriageConstant.Religion religion;
-
-    @Column
-    private boolean deceased;
+    private String dowry;
 
     @Column
     private String provinceCode;

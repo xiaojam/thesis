@@ -1,35 +1,27 @@
-package id.go.kemenag.spn.entity;
+package id.go.kemenag.spn.entity.marriage;
 
 import id.go.kemenag.spn.constant.MarriageConstant;
 import id.go.kemenag.spn.entity.base.BaseEntity;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Size;
+import lombok.*;
 import org.hibernate.annotations.UuidGenerator;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDate;
 import java.util.UUID;
 
-public class Bride extends BaseEntity {
+@Data
+@Entity
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
+public class BrideFather extends BaseEntity {
 
     @Column
+    @Id
     @UuidGenerator(style = UuidGenerator.Style.AUTO)
     private UUID id;
-
-    @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    @JoinColumn(name = "bride_father_id", referencedColumnName = "id")
-    private BrideFather brideFather;
-
-    @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    @JoinColumn(name = "bride_mother_id", referencedColumnName = "id")
-    private BrideMother brideMother;
-
-    @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    @JoinColumn(name ="previous_partner_id", referencedColumnName = "id")
-    private PreviousPartner previousPartner;
-
-    @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    @JoinColumn(name = "guardian_id", referencedColumnName = "id")
-    private Guardian guardian;
 
     @Column
     private String firstName;
@@ -51,9 +43,6 @@ public class Bride extends BaseEntity {
     private LocalDate birthDate;
 
     @Column
-    private MarriageConstant.Gender gender;
-
-    @Column
     private String job;
 
     @Column
@@ -63,10 +52,7 @@ public class Bride extends BaseEntity {
     private MarriageConstant.Religion religion;
 
     @Column
-    private MarriageConstant.MaritalStatus maritalStatus;
-
-    @Column
-    private String phoneNumber;
+    private boolean deceased;
 
     @Column
     private String provinceCode;

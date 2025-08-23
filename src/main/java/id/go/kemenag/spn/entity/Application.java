@@ -1,13 +1,11 @@
 package id.go.kemenag.spn.entity;
 
 import id.go.kemenag.spn.constant.ApplicationConstant;
-import id.go.kemenag.spn.dto.base.KeyValuePair;
 import id.go.kemenag.spn.entity.base.BaseEntity;
+import id.go.kemenag.spn.entity.marriage.Bride;
+import id.go.kemenag.spn.entity.marriage.Groom;
+import id.go.kemenag.spn.entity.marriage.Marriage;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
 import org.hibernate.annotations.UuidGenerator;
 
 import java.util.UUID;
@@ -29,15 +27,10 @@ public class Application extends BaseEntity {
     @Column
     private String processId;
 
-    @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    @JoinColumn(name = "bride_id", referencedColumnName = "id")
-    private Bride bride;
+    @Column
+    @Enumerated(EnumType.STRING)
+    private ApplicationConstant.Type type;
 
-    @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    @JoinColumn(name = "groom_id", referencedColumnName = "id")
-    private Groom groom;
-
-    @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    @JoinColumn(name = "marriage_id", referencedColumnName = "id")
-    private Marriage marriage;
+    @Column
+    private String applicationId;
 }
