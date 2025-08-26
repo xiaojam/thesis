@@ -1,11 +1,11 @@
 package id.go.kemenag.spn.entity.marriage;
 
+import id.go.kemenag.spn.entity.Application;
 import id.go.kemenag.spn.entity.base.BaseEntity;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Size;
 import lombok.*;
 import org.hibernate.annotations.UuidGenerator;
-import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -21,6 +21,10 @@ public class Marriage extends BaseEntity {
     @Id
     @UuidGenerator(style = UuidGenerator.Style.AUTO)
     private UUID id;
+
+    @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JoinColumn(name = "application_id", referencedColumnName = "id")
+    private Application application;
 
     @Column
     private LocalDateTime datetime;

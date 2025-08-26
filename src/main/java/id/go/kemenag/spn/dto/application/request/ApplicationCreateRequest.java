@@ -8,6 +8,7 @@ import id.go.kemenag.spn.dto.groom.request.GroomCreateRequest;
 import id.go.kemenag.spn.dto.groom.request.GroomFatherCreateRequest;
 import id.go.kemenag.spn.dto.groom.request.GroomMotherCreateRequest;
 import id.go.kemenag.spn.dto.guardian.request.GuardianCreateRequest;
+import id.go.kemenag.spn.dto.marriage.request.MarriageCreateRequest;
 import id.go.kemenag.spn.dto.previouspartner.request.PreviousPartnerCreateRequest;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -54,4 +55,7 @@ public class ApplicationCreateRequest {
 
     @JsonProperty("previous_bride_partner")
     private PreviousPartnerCreateRequest previousBridePartner;
+
+    @JsonProperty("marriage")
+    private MarriageCreateRequest marriage;
 }

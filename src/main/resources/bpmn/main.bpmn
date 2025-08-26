@@ -4,27 +4,27 @@
     <bpmn:startEvent id="StartEvent_1">
       <bpmn:outgoing>Flow_1pcokv6</bpmn:outgoing>
     </bpmn:startEvent>
-    <bpmn:task id="Activity_0bea1ch" name="Test">
-      <bpmn:incoming>Flow_1pcokv6</bpmn:incoming>
-      <bpmn:outgoing>Flow_1b0tjxe</bpmn:outgoing>
-    </bpmn:task>
-    <bpmn:sequenceFlow id="Flow_1pcokv6" sourceRef="StartEvent_1" targetRef="Activity_0bea1ch" />
+    <bpmn:sequenceFlow id="Flow_1pcokv6" sourceRef="StartEvent_1" targetRef="Main_Activity" />
     <bpmn:endEvent id="Event_0yvpt9s">
       <bpmn:incoming>Flow_1b0tjxe</bpmn:incoming>
     </bpmn:endEvent>
-    <bpmn:sequenceFlow id="Flow_1b0tjxe" sourceRef="Activity_0bea1ch" targetRef="Event_0yvpt9s" />
+    <bpmn:sequenceFlow id="Flow_1b0tjxe" sourceRef="Main_Activity" targetRef="Event_0yvpt9s" />
+    <bpmn:serviceTask id="Main_Activity" name="Main Menu" camunda:delegateExpression="#{mainActivity}">
+      <bpmn:incoming>Flow_1pcokv6</bpmn:incoming>
+      <bpmn:outgoing>Flow_1b0tjxe</bpmn:outgoing>
+    </bpmn:serviceTask>
   </bpmn:process>
   <bpmndi:BPMNDiagram id="BPMNDiagram_1">
     <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_Main">
       <bpmndi:BPMNShape id="StartEvent_1_di" bpmnElement="StartEvent_1">
         <dc:Bounds x="182" y="102" width="36" height="36" />
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Activity_0bea1ch_di" bpmnElement="Activity_0bea1ch">
-        <dc:Bounds x="270" y="80" width="100" height="80" />
-        <bpmndi:BPMNLabel />
-      </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Event_0yvpt9s_di" bpmnElement="Event_0yvpt9s">
         <dc:Bounds x="422" y="102" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0tpzrim_di" bpmnElement="Main_Activity">
+        <dc:Bounds x="270" y="80" width="100" height="80" />
+        <bpmndi:BPMNLabel />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNEdge id="Flow_1pcokv6_di" bpmnElement="Flow_1pcokv6">
         <di:waypoint x="218" y="120" />

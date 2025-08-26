@@ -5,6 +5,7 @@ import id.go.kemenag.spn.entity.base.BaseEntity;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Size;
 import lombok.*;
+import lombok.experimental.SuperBuilder;
 import org.hibernate.annotations.UuidGenerator;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
@@ -22,6 +23,7 @@ public class Guardian extends BaseEntity {
     @Id
     @UuidGenerator(style = UuidGenerator.Style.AUTO)
     private UUID id;
+
 
     @Column
     private String firstName;

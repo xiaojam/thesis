@@ -9,5 +9,5 @@ import java.util.UUID;
 
 public interface ApplicationService {
 
-    ApplicationResponse create(ApplicationCreateRequest request, String menu);
+    ApplicationResponse createMarriage(ApplicationCreateRequest request);
 }

@@ -1,8 +1,14 @@
 package id.go.kemenag.spn.service;
 
 import id.go.kemenag.spn.entity.marriage.Bride;
+import id.go.kemenag.spn.entity.marriage.BrideFather;
+import id.go.kemenag.spn.entity.marriage.BrideMother;
 
 public interface BrideService {
 
-    void save(Bride bride);
+    Bride save(Bride bride);
+
+    BrideFather save(BrideFather brideFather);
+
+    BrideMother save(BrideMother brideMother);
 }

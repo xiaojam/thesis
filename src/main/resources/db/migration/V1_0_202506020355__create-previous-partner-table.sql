@@ -26,11 +26,11 @@ CREATE TABLE IF NOT EXISTS previous_partner (
     rt TEXT NULL,
     zip_code TEXT NULL,
 
-    version INTEGER NOT NULL DEFAULT 0,
+    version INTEGER DEFAULT 0,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    created_by TEXT NOT NULL DEFAULT 'system',
-    deleted BOOLEAN NOT NULL DEFAULT FALSE,
-    deleted_at TIMESTAMP WITH TIME ZONE NULL,
+    created_by TEXT DEFAULT 'system',
+    deleted BOOLEAN DEFAULT FALSE,
+    deleted_at TIMESTAMP WITH TIME ZONE,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    updated_by TEXT NOT NULL DEFAULT 'system'
+    updated_by TEXT DEFAULT 'system'
 );
