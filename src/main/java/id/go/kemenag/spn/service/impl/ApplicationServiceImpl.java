@@ -3,21 +3,25 @@ package id.go.kemenag.spn.service.impl;
 import id.go.kemenag.spn.constant.ApplicationConstant;
 import id.go.kemenag.spn.constant.MarriageConstant;
 import id.go.kemenag.spn.dto.application.request.ApplicationCreateRequest;
+import id.go.kemenag.spn.dto.application.request.ApplicationMarriageRequest;
+import id.go.kemenag.spn.dto.application.response.ApplicationMarriageStatusResponse;
 import id.go.kemenag.spn.dto.application.response.ApplicationResponse;
+import id.go.kemenag.spn.dto.marriage.request.MarriageCreateRequest;
 import id.go.kemenag.spn.dto.previouspartner.request.PreviousPartnerCreateRequest;
 import id.go.kemenag.spn.entity.Application;
 import id.go.kemenag.spn.entity.marriage.*;
 import id.go.kemenag.spn.exception.BusinessErrorException;
 import id.go.kemenag.spn.mapper.*;
 import id.go.kemenag.spn.repository.ApplicationRepository;
-import id.go.kemenag.spn.service.ApplicationService;
-import id.go.kemenag.spn.service.BrideService;
-import id.go.kemenag.spn.service.CamundaService;
-import id.go.kemenag.spn.service.GroomService;
+import id.go.kemenag.spn.service.*;
+import id.go.kemenag.spn.util.ErrorUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+
+import java.util.HashMap;
+import java.util.Map;
 
 @Service
 @Slf4j
@@ -48,15 +52,19 @@ public class ApplicationServiceImpl implements ApplicationService {
     private PreviousPartnerMapper previousPartnerMapper;
 
     @Autowired
+    private MarriageMapper marriageMapper;
+
+    @Autowired
     private ApplicationRepository applicationRepository;
+
+    @Autowired
+    private MarriageService marriageService;
 
     @Autowired
     private CamundaService camundaService;
 
     @Override
     public ApplicationResponse createMarriage(ApplicationCreateRequest request) {
-
-        System.out.println("Masuk Application");
         var application = Application
             .builder()
             .type(ApplicationConstant.Type.MARRIAGE)
@@ -64,8 +72,6 @@ public class ApplicationServiceImpl implements ApplicationService {
             .build();
 
         application = this.save(application);
-
-        System.out.println("Application ID: " + application.getId());
 
         var brideFather = this.processBrideFather(request);
         var brideMother = this.processBrideMother(request);
@@ -79,22 +85,58 @@ public class ApplicationServiceImpl implements ApplicationService {
         application.setProcessId(processId);
         application = this.save(application);
 
-        var bride = this.processBride(application, request, brideFather, brideMother, guardian, previousBridePartner);
-        var groom = this.processGroom(application, request, groomFather, groomMother, previousGroomPartner);
+        this.processBride(application, request, brideFather, brideMother, guardian, previousBridePartner);
+        this.processGroom(application, request, groomFather, groomMother, previousGroomPartner);
+        this.processMarriage(request.getMarriage(), application);
 
-        return ApplicationResponse.builder()
+        return ApplicationResponse
+            .builder()
             .applicationId(application.getId())
             .processId(processId)
-            .brideId(String.valueOf(bride.getId()))
-            .groomId(String.valueOf(groom.getId()))
             .build();
+    }
+
+    @Override
+    public ApplicationMarriageStatusResponse checkMarriageStatus(ApplicationMarriageRequest request) {
+        var groom = this.groomService.findFirstByIdentityId(request.getGroomIdentityId());
+        var bride = this.brideService.findFirstByIdentityId(request.getBrideIdentityId());
+
+        this.validateCoupleData(request, groom, bride);
+
+        return ApplicationMarriageStatusResponse
+            .builder()
+            .status(groom.getApplication().getStatus().name())
+            .groomName(String.format("%s %s", groom.getFirstName(), groom.getLastName()))
+            .brideName(String.format("%s %s", bride.getFirstName(), bride.getLastName()))
+            .build();
+    }
+
+    private void validateCoupleData(ApplicationMarriageRequest request, Groom groom, Bride bride) {
+        Map<String, String> errors = new HashMap<>();
+
+        if (groom == null) {
+            errors.put("groom_identity_id", String.format("Data dengan NIK %s tidak ditemukan.", request.getGroomIdentityId()));
+        }
+
+        if (bride == null) {
+            errors.put("bride_identity_id", String.format("Data dengan NIK %s tidak ditemukan.", request.getBrideIdentityId()));
+        }
+
+        if (!errors.isEmpty()) {
+            ErrorUtil.throwErrors("Data calon pengantin tidak ditemukan.", HttpStatus.NOT_FOUND, errors);
+        }
+
+        if (!groom.getApplication().getId().equals(bride.getApplication().getId())) {
+            errors.put("data_mismatch", "Data NIK mempelai pria dan wanita tidak terdaftar dalam satu pengajuan yang sama.");
+            ErrorUtil.throwErrors("Data pengantin tidak cocok.", HttpStatus.BAD_REQUEST, errors);
+        }
     }
 
     private Application save(Application application) {
         return this.applicationRepository.save(application);
     }
 
-    private Bride processBride(
+    private void processBride(
         Application application,
         ApplicationCreateRequest request,
         BrideFather brideFather,
@@ -135,7 +177,7 @@ public class ApplicationServiceImpl implements ApplicationService {
             .zipCode(request.getBride().getZipCode())
             .build();
 
-        return this.brideService.save(bride);
+        this.brideService.save(bride);
     }
 
     private BrideFather processBrideFather(ApplicationCreateRequest request) {
@@ -146,7 +188,7 @@ public class ApplicationServiceImpl implements ApplicationService {
         return this.brideMotherMapper.convert(request.getBrideMother());
     }
 
-    private Groom processGroom(
+    private void processGroom(
         Application application,
         ApplicationCreateRequest request,
         GroomFather groomFather,
@@ -185,7 +227,7 @@ public class ApplicationServiceImpl implements ApplicationService {
             .zipCode(request.getBride().getZipCode())
             .build();
 
-        return this.groomService.save(groom);
+        this.groomService.save(groom);
     }
 
     private GroomFather processGroomFather(ApplicationCreateRequest request) {
@@ -198,6 +240,12 @@ public class ApplicationServiceImpl implements ApplicationService {
 
     private Guardian processGuardian(ApplicationCreateRequest request) {
         return this.guardianMapper.convert(request.getGuardian());
+    }
+
+    private void processMarriage(MarriageCreateRequest request, Application application) {
+        var marriage = this.marriageMapper.convert(request, application);
+
+        this.marriageService.save(marriage);
     }
 
     private PreviousPartner processGroomPreviousPartner(ApplicationCreateRequest request) {
@@ -222,7 +270,7 @@ public class ApplicationServiceImpl implements ApplicationService {
         boolean isPreviousPartnerMissing = previousPartnerDto == null;
 
         if (isNotSingle && isPreviousPartnerMissing) {
-            this.throwError(
+            ErrorUtil.throwError(
                 "Data pasangan sebelumnya wajib diisi jika status pernikahan bukan lajang",
                 HttpStatus.BAD_REQUEST
             );
@@ -231,9 +279,5 @@ public class ApplicationServiceImpl implements ApplicationService {
         return (previousPartnerDto != null)
             ? this.previousPartnerMapper.convert(previousPartnerDto)
             : null;
-    }
-
-    private void throwError(String message, HttpStatus status) {
-        throw new BusinessErrorException(status, message);
     }
 }

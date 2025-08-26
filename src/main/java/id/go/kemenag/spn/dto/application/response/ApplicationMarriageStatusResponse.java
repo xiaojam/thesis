@@ -6,17 +6,18 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.UUID;
-
 @Data
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class ApplicationResponse {
+public class ApplicationMarriageStatusResponse {
 
-    @JsonProperty("application_id")
-    private UUID applicationId;
+    @JsonProperty("status")
+    private String status;
 
-    @JsonProperty("process_id")
-    private UUID processId;
+    @JsonProperty("groom_name")
+    private String groomName;
+
+    @JsonProperty("bride_name")
+    private String brideName;
 }

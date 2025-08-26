@@ -20,7 +20,6 @@ public class CamundaServiceImpl implements CamundaService {
 
     @Override
     public UUID invokeProcess(ApplicationConstant.Type type, UUID applicationId) {
-        System.out.println("Masuk Sini");
         Map<String, Object> variables = new HashMap<>();
         variables.put(WorkflowConstant.APPLICATION_ID_VARIABLE, applicationId);
         variables.put(WorkflowConstant.APPLICATION_TYPE_VARIABLE, type.toString());
@@ -31,7 +30,6 @@ public class CamundaServiceImpl implements CamundaService {
             variables
         );
 
-        System.out.println("masuk sini kah");
         return UUID.fromString(processInstance.getProcessInstanceId());
     }
 }

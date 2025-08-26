@@ -1,4 +1,4 @@
-package id.go.kemenag.spn.repository.divorce;
+package id.go.kemenag.spn.repository.marriage;
 
 import id.go.kemenag.spn.entity.marriage.BrideFather;
 import org.springframework.data.repository.CrudRepository;

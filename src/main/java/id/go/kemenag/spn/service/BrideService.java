@@ -11,4 +11,6 @@ public interface BrideService {
     BrideFather save(BrideFather brideFather);
 
     BrideMother save(BrideMother brideMother);
+
+    Bride findFirstByIdentityId(String identityId);
 }

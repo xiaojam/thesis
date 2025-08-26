@@ -14,11 +14,7 @@ public class MainActivity implements JavaDelegate {
 
     @Override
     public void execute(DelegateExecution delegateExecution) throws Exception {
-        System.out.println("di sini?");
-        System.out.println(delegateExecution.getVariables());
         UUID applicationId = (UUID) delegateExecution.getVariable(WorkflowConstant.APPLICATION_ID_VARIABLE);
         log.info("Main Activity for ID: {}", applicationId);
-
-        System.out.println("PASS");
     }
 }

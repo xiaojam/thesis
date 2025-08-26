@@ -1,7 +1,7 @@
 package id.go.kemenag.spn.service.impl;
 
 import id.go.kemenag.spn.entity.marriage.PreviousPartner;
-import id.go.kemenag.spn.repository.divorce.PreviousPartnerRepository;
+import id.go.kemenag.spn.repository.marriage.PreviousPartnerRepository;
 import id.go.kemenag.spn.service.PreviousPartnerService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;

@@ -3,9 +3,9 @@ package id.go.kemenag.spn.service.impl;
 import id.go.kemenag.spn.entity.marriage.Groom;
 import id.go.kemenag.spn.entity.marriage.GroomFather;
 import id.go.kemenag.spn.entity.marriage.GroomMother;
-import id.go.kemenag.spn.repository.divorce.GroomFatherRepository;
-import id.go.kemenag.spn.repository.divorce.GroomMotherRepository;
-import id.go.kemenag.spn.repository.divorce.GroomRepository;
+import id.go.kemenag.spn.repository.marriage.GroomFatherRepository;
+import id.go.kemenag.spn.repository.marriage.GroomMotherRepository;
+import id.go.kemenag.spn.repository.marriage.GroomRepository;
 import id.go.kemenag.spn.service.GroomService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,5 +37,10 @@ public class GroomServiceImpl implements GroomService {
     @Override
     public GroomFather save(GroomFather groomFather) {
         return this.groomFatherRepository.save(groomFather);
+    }
+
+    @Override
+    public Groom findFirstByIdentityId(String identityId) {
+        return this.groomRepository.findFirstByIdentityIdAndDeletedIsFalseOrderByCreatedAtDesc(identityId).orElse(null);
     }
 }

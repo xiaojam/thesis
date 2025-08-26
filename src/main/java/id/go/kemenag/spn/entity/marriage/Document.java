@@ -20,5 +20,4 @@ public class Document extends BaseEntity {
 
     @Column
     private List<DataDocument> documents;
-
 }

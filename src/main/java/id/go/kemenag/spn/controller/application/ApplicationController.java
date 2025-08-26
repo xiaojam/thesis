@@ -1,6 +1,8 @@
 package id.go.kemenag.spn.controller.application;
 
 import id.go.kemenag.spn.dto.application.request.ApplicationCreateRequest;
+import id.go.kemenag.spn.dto.application.request.ApplicationMarriageRequest;
+import id.go.kemenag.spn.dto.application.response.ApplicationMarriageStatusResponse;
 import id.go.kemenag.spn.dto.application.response.ApplicationResponse;
 import id.go.kemenag.spn.service.ApplicationService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -37,5 +39,13 @@ public class ApplicationController {
     @Operation(summary = "create", description = "create a new divorce application")
     ApplicationResponse createDivorce(@RequestBody @Valid ApplicationCreateRequest request) {
         return this.applicationService.createMarriage(request);
+    }
+
+    @GetMapping(value = "/marriage/status", produces = "application/json")
+    @ResponseStatus(HttpStatus.OK)
+    @PreAuthorize("@apiKeyChecker.isValid()")
+    @Operation(summary = "get", description = "get application status by id")
+    ApplicationMarriageStatusResponse checkMarriageStatus(@RequestBody @Valid ApplicationMarriageRequest request) {
+        return this.applicationService.checkMarriageStatus(request);
     }
 }

@@ -11,4 +11,6 @@ public interface GroomService {
     GroomMother save(GroomMother groomMother);
 
     GroomFather save(GroomFather groomFather);
+
+    Groom findFirstByIdentityId(String identityId);
 }
