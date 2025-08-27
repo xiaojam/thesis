@@ -69,6 +69,7 @@ public class SecurityConfig {
                         response.getWriter().write("Access Denied");
                     })
             );
+
         return http.build();
     }
 }

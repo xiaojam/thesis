@@ -11,7 +11,6 @@ import java.io.Serializable;
 import java.time.ZonedDateTime;
 
 @Data
-@ToString
 @MappedSuperclass
 @AllArgsConstructor
 @NoArgsConstructor
@@ -29,7 +28,7 @@ public class BaseEntity implements Serializable {
     @Column(updatable = false)
     private ZonedDateTime createdAt;
 
-    @Column(updatable = false)
+    @Column(updatable = false, insertable = false)
     private String createdBy;
 
     @Column
@@ -42,6 +41,6 @@ public class BaseEntity implements Serializable {
     @Column
     private ZonedDateTime updatedAt;
 
-    @Column
+    @Column(insertable = false)
     private String updatedBy;
 }

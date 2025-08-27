@@ -6,12 +6,11 @@ public class WorkflowConstant {
         throw new Exception("Utility");
     }
 
-    public enum WorkflowStatus {
-        COMPLETE,
-        INCOMPLETE,
-    }
+    // Process Definition Keys
+    public static final String PROCESS_MAIN_KEY = "Process_Main";
 
-    public static final String APPLICATION_ID_VARIABLE_KEY = "applicationId";
-
-    public static final String WORKFLOW_CREATE_ORDER = "createOrder";
+    // Variables
+    public static final String APPLICATION_ID_VARIABLE = "applicationId";
+    public static final String APPLICATION_TYPE_VARIABLE = "applicationType";
+    public static final String APPLICATION_STATUS_VARIABLE = "applicationStatus";
 }

@@ -1,6 +1,3 @@
--- Use CREATE TABLE IF NOT EXISTS for initial table creation.
--- This creates the table if it doesn't exist, and does nothing otherwise,
--- making it safe and idempotent for Flyway migrations.
 CREATE TABLE IF NOT EXISTS groom (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     first_name TEXT NOT NULL,
@@ -28,11 +25,11 @@ CREATE TABLE IF NOT EXISTS groom (
     rt TEXT NULL,
     zip_code TEXT NULL,
 
-    version INTEGER NOT NULL DEFAULT 0,
+    version INTEGER DEFAULT 0,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    created_by TEXT NOT NULL DEFAULT 'system',
-    deleted BOOLEAN NOT NULL DEFAULT FALSE,
-    deleted_at TIMESTAMP WITH TIME ZONE NULL,
+    created_by TEXT DEFAULT 'system',
+    deleted BOOLEAN DEFAULT FALSE,
+    deleted_at TIMESTAMP WITH TIME ZONE,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    updated_by TEXT NOT NULL DEFAULT 'system'
+    updated_by TEXT DEFAULT 'system'
 );

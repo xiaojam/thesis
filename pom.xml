@@ -29,6 +29,8 @@
 		<spring-security.version>6.3.4</spring-security.version>
 		<camunda.version>7.23.0</camunda.version>
 		<camunda-assert.version>13.0.0</camunda-assert.version>
+		<model.mapper.version>3.2.3</model.mapper.version>
+		<org.mapstruct.version>1.6.3</org.mapstruct.version>
 	</properties>
 
 	<dependencyManagement>
@@ -160,6 +162,22 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-web</artifactId>
 		</dependency>
+		<dependency>
+			<groupId>org.mapstruct</groupId>
+			<artifactId>mapstruct</artifactId>
+			<version>${org.mapstruct.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.mapstruct</groupId>
+			<artifactId>mapstruct-processor</artifactId>
+			<version>${org.mapstruct.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.modelmapper</groupId>
+			<artifactId>modelmapper</artifactId>
+			<version>${model.mapper.version}</version>
+		</dependency>
+
 	</dependencies>
 
 	<build>
