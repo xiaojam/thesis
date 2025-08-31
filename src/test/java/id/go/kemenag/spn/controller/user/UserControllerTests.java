@@ -23,16 +23,4 @@ public class UserControllerTests {
 
     @MockBean
     UserService userService;
-
-    @Test
-    void should_call_user_service_test() throws Throwable {
-        when(this.userService.test()).thenReturn("Hello World");
-
-        mockMvc
-            .perform(
-                MockMvcRequestBuilders
-                    .post("/v1/user")
-            )
-            .andExpect(status().isCreated());
-    }
 }

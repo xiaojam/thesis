@@ -1,6 +1,7 @@
 package id.go.kemenag.spn.mapper;
 
 import id.go.kemenag.spn.dto.groom.request.GroomMotherCreateRequest;
+import id.go.kemenag.spn.dto.groom.response.GroomMotherResponse;
 import id.go.kemenag.spn.entity.marriage.GroomMother;
 import org.mapstruct.Builder;
 import org.mapstruct.Mapper;
@@ -11,4 +12,6 @@ import org.mapstruct.MapperConfig;
 public interface GroomMotherMapper {
 
     GroomMother convert(GroomMotherCreateRequest source);
+
+    GroomMotherResponse convert(GroomMother source);
 }

@@ -17,10 +17,14 @@ public class InternalSecurityFilter extends OncePerRequestFilter {
     private final ApplicationSettingProperty applicationSettingProperty;
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
+    protected void doFilterInternal(
+        HttpServletRequest request,
+        HttpServletResponse response,
+        FilterChain filterChain
+    ) throws ServletException, IOException {
 
-        var apiKeyHeaderName = applicationSettingProperty.getSecurity().getApplication().getKey();
-        var expectedApiSecret = applicationSettingProperty.getSecurity().getApplication().getValue();
+        var apiKeyHeaderName = applicationSettingProperty.getAppKey();
+        var expectedApiSecret = applicationSettingProperty.getAppSecret();
         var providedKeySecret = request.getHeader(apiKeyHeaderName);
 
         if (providedKeySecret != null) {

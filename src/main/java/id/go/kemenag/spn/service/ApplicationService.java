@@ -1,18 +1,19 @@
 package id.go.kemenag.spn.service;
 
-import id.go.kemenag.spn.constant.WorkflowConstant;
-import id.go.kemenag.spn.dto.application.request.ApplicationCreateRequest;
-import id.go.kemenag.spn.dto.application.request.ApplicationMarriageRequest;
-import id.go.kemenag.spn.dto.application.response.ApplicationMarriageStatusResponse;
-import id.go.kemenag.spn.dto.application.response.ApplicationResponse;
+import id.go.kemenag.spn.constant.ApplicationConstant;
 import id.go.kemenag.spn.entity.Application;
-import jakarta.validation.Valid;
 
+import java.util.List;
 import java.util.UUID;
 
 public interface ApplicationService {
 
-    ApplicationResponse createMarriage(ApplicationCreateRequest request);
+    List<Application> findAllAndStatusInAndType(
+        List<ApplicationConstant.Status> statusList,
+        ApplicationConstant.Type type
+    );
 
-    ApplicationMarriageStatusResponse checkMarriageStatus(@Valid ApplicationMarriageRequest request);
+    Application save(Application application);
+
+    List<UUID> collectIds(List<Application> applications);
 }

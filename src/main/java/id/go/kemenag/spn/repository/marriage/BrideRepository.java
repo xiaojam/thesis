@@ -11,4 +11,6 @@ import java.util.UUID;
 public interface BrideRepository extends CrudRepository<Bride, UUID> {
 
     Optional<Bride> findFirstByIdentityIdAndDeletedIsFalseOrderByCreatedAtDesc(String identityId);
+
+    Iterable<Bride> findAllByApplicationIdInAndDeletedIsFalseOrderByCreatedAtAsc(Iterable<UUID> applicationIds);
 }

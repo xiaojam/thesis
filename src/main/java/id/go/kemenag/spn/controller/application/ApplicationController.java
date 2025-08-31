@@ -1,10 +1,10 @@
 package id.go.kemenag.spn.controller.application;
 
-import id.go.kemenag.spn.dto.application.request.ApplicationCreateRequest;
+import id.go.kemenag.spn.dto.application.request.ApplicationMarriageCreateRequest;
 import id.go.kemenag.spn.dto.application.request.ApplicationMarriageRequest;
 import id.go.kemenag.spn.dto.application.response.ApplicationMarriageStatusResponse;
-import id.go.kemenag.spn.dto.application.response.ApplicationResponse;
-import id.go.kemenag.spn.service.ApplicationService;
+import id.go.kemenag.spn.dto.application.response.ApplicationMarriageCreateResponse;
+import id.go.kemenag.spn.service.marriage.ApplicationMarriageService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -18,10 +18,10 @@ import org.springframework.web.bind.annotation.*;
 @Tag(name = "Application", description = "Application API")
 public class ApplicationController {
 
-    final ApplicationService applicationService;
+    final ApplicationMarriageService applicationService;
 
     @Autowired
-    public ApplicationController(ApplicationService applicationService) {
+    public ApplicationController(ApplicationMarriageService applicationService) {
         this.applicationService = applicationService;
     }
 
@@ -29,15 +29,15 @@ public class ApplicationController {
     @ResponseStatus(HttpStatus.CREATED)
     @PreAuthorize("@apiKeyChecker.isValid()")
     @Operation(summary = "create", description = "create a new marriage application")
-    ApplicationResponse createMarriage(@RequestBody @Valid ApplicationCreateRequest request) {
+    ApplicationMarriageCreateResponse createMarriage(@RequestBody @Valid ApplicationMarriageCreateRequest request) {
         return this.applicationService.createMarriage(request);
     }
 
     @PostMapping(value = "/divorce", produces = "application/json")
     @ResponseStatus(HttpStatus.CREATED)
-    @PreAuthorize("hasRole('DEFAULT')")
+    @PreAuthorize("@apiKeyChecker.isValid()")
     @Operation(summary = "create", description = "create a new divorce application")
-    ApplicationResponse createDivorce(@RequestBody @Valid ApplicationCreateRequest request) {
+    ApplicationMarriageCreateResponse createDivorce(@RequestBody @Valid ApplicationMarriageCreateRequest request) {
         return this.applicationService.createMarriage(request);
     }
 

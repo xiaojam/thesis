@@ -8,3 +8,16 @@ services:
       POSTGRES_DB: spn
       POSTGRES_USER: admin
       POSTGRES_PASSWORD: "@Rojam456"
+
+  redis:
+    image: redis:latest
+    container_name: redis
+    restart: always
+    ports:
+      - "6379:6379"
+    command: redis-server --requirepass Rojam456
+    volumes:
+      - redis_data:/data
+
+volumes:
+  redis_data: {}
