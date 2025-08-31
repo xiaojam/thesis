@@ -31,6 +31,7 @@
 		<camunda-assert.version>13.0.0</camunda-assert.version>
 		<model.mapper.version>3.2.3</model.mapper.version>
 		<org.mapstruct.version>1.6.3</org.mapstruct.version>
+        <auth0.version>4.4.0</auth0.version>
 	</properties>
 
 	<dependencyManagement>
@@ -177,6 +178,22 @@
 			<artifactId>modelmapper</artifactId>
 			<version>${model.mapper.version}</version>
 		</dependency>
+
+        <dependency>
+            <groupId>com.auth0</groupId>
+            <artifactId>java-jwt</artifactId>
+            <version>${auth0.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-redis</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>io.lettuce</groupId>
+            <artifactId>lettuce-core</artifactId>
+        </dependency>
 
 	</dependencies>
 

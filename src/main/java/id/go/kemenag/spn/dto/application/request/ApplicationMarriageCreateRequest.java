@@ -20,7 +20,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class ApplicationCreateRequest {
+public class ApplicationMarriageCreateRequest {
 
     @JsonProperty("bride")
     @NotNull

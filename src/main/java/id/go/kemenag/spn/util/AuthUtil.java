@@ -1,6 +1,6 @@
 package id.go.kemenag.spn.util;
 
-import id.go.kemenag.spn.constant.ApplicationConstant;
+import id.go.kemenag.spn.constant.AuthConstant;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 public class AuthUtil {
@@ -15,7 +15,7 @@ public class AuthUtil {
         return encoder.matches(plainPassword, hashedPassword);
     }
 
-    public static String hasRole(ApplicationConstant.Role role) {
+    public static String hasRole(AuthConstant.Role role) {
         return "ROLE_" + role.name();
     }
 }

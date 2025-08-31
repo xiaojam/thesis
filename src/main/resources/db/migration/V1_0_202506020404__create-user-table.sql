@@ -4,7 +4,8 @@ CREATE TABLE IF NOT EXISTS "user" (
     last_name TEXT NULL,
     username TEXT NOT NULL UNIQUE,
     password TEXT NOT NULL,
-    workplace_code TEXT NOT NULL,
+    role TEXT DEFAULT 'USER',
+    workplace_code TEXT NULL,
     workplace_name TEXT NULL,
 
     version INTEGER DEFAULT 0,

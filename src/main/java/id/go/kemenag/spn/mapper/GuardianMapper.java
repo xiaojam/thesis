@@ -1,6 +1,7 @@
 package id.go.kemenag.spn.mapper;
 
 import id.go.kemenag.spn.dto.guardian.request.GuardianCreateRequest;
+import id.go.kemenag.spn.dto.guardian.response.GuardianResponse;
 import id.go.kemenag.spn.entity.marriage.Guardian;
 import org.mapstruct.Builder;
 import org.mapstruct.Mapper;
@@ -11,4 +12,6 @@ import org.mapstruct.MapperConfig;
 public interface GuardianMapper {
 
     Guardian convert(GuardianCreateRequest source);
+
+    GuardianResponse convert(Guardian source);
 }

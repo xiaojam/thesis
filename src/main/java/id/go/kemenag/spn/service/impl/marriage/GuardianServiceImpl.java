@@ -1,8 +1,8 @@
-package id.go.kemenag.spn.service.impl;
+package id.go.kemenag.spn.service.impl.marriage;
 
 import id.go.kemenag.spn.entity.marriage.Guardian;
 import id.go.kemenag.spn.repository.marriage.GuardianRepository;
-import id.go.kemenag.spn.service.GuardianService;
+import id.go.kemenag.spn.service.marriage.GuardianService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;

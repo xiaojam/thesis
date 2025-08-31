@@ -1,12 +1,16 @@
 package id.go.kemenag.spn.config;
 
 import id.go.kemenag.spn.config.filter.InternalSecurityFilter;
+import id.go.kemenag.spn.config.filter.JwtAuthenticationFilter;
 import id.go.kemenag.spn.config.property.ApplicationSettingProperty;
+import id.go.kemenag.spn.service.JwtService;
 import lombok.AllArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -27,10 +31,16 @@ public class SecurityConfig {
 
     private final ApplicationSettingProperty applicationSettingProperty;
     private final UserDetailsService userDetailsService;
+    private final JwtService jwtService;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
+    }
+
+    @Bean
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) throws Exception {
+        return authenticationConfiguration.getAuthenticationManager();
     }
 
     @Bean
@@ -44,6 +54,7 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain defaultSecurityFilterChain(HttpSecurity http) throws Exception {
         InternalSecurityFilter internalSecurityFilter = new InternalSecurityFilter(this.applicationSettingProperty);
+        JwtAuthenticationFilter jwtAuthenticationFilter = new JwtAuthenticationFilter(this.jwtService, this.userDetailsService);
 
         http
             .csrf(AbstractHttpConfigurer::disable)
@@ -55,12 +66,12 @@ public class SecurityConfig {
                 .requestMatchers("/camunda/**", "/camunda**").permitAll()
                 .requestMatchers("/public/**").permitAll()
                 .requestMatchers("/error").permitAll()
-                .anyRequest().permitAll()
+                .requestMatchers("/v1/application/**").permitAll()
+                .requestMatchers("/v1/auth/**").permitAll()
+                .anyRequest().authenticated()
             )
             .addFilterBefore(internalSecurityFilter, UsernamePasswordAuthenticationFilter.class)
-            .httpBasic(httpBasic ->
-                httpBasic.authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED))
-            )
+            .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
             .exceptionHandling(exceptions ->
                 exceptions
                     .authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED))

@@ -11,4 +11,6 @@ import java.util.UUID;
 public interface GroomRepository extends CrudRepository<Groom, UUID> {
 
     Optional<Groom> findFirstByIdentityIdAndDeletedIsFalseOrderByCreatedAtDesc(String identityId);
+
+    Iterable<Groom> findAllByApplicationIdInAndDeletedIsFalseOrderByCreatedAtAsc(Iterable<UUID> applicationIds);
 }

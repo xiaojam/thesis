@@ -1,13 +1,11 @@
-package id.go.kemenag.spn.entity.marriage;
+package id.go.kemenag.spn.entity;
 
-import id.go.kemenag.spn.constant.ApplicationConstant;
+import id.go.kemenag.spn.constant.AuthConstant;
 import id.go.kemenag.spn.entity.base.BaseEntity;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import lombok.*;
-import lombok.experimental.SuperBuilder;
 import org.hibernate.annotations.UuidGenerator;
-import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.util.UUID;
 
@@ -16,6 +14,7 @@ import java.util.UUID;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
+@Table(name = "\"user\"")
 public class User extends BaseEntity {
 
     @Column
@@ -29,7 +28,7 @@ public class User extends BaseEntity {
 
     @Column
     @Enumerated(EnumType.STRING)
-    private ApplicationConstant.Role role;
+    private AuthConstant.Role role;
 
     @Column
     private String firstName;

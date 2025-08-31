@@ -1,4 +1,4 @@
-package id.go.kemenag.spn.service;
+package id.go.kemenag.spn.service.marriage;
 
 import id.go.kemenag.spn.entity.marriage.Guardian;
 

@@ -15,8 +15,8 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 public class MarriageCreateRequest {
 
-    @JsonProperty("date")
-    private LocalDateTime date;
+    @JsonProperty("datetime")
+    private LocalDateTime datetime;
 
     @JsonProperty("dowry")
     private String dowry;

@@ -14,19 +14,6 @@ public class ApplicationConstant {
         DONE,
     }
 
-    public enum Role {
-        // Petugas Pendaftaran Nikah di Desa
-        REGISTRAR,
-        // Kepala Desa
-        HEADMAN,
-        // Petugas KUA
-        OFFICER,
-        // Kepala KUA
-        APPROVER,
-        USER,
-        SUPER_USER,
-    }
-
     public enum Type {
         MARRIAGE,
         DIVORCE,

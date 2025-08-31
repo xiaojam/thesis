@@ -17,6 +17,12 @@ public class ApplicationSettingProperty {
 
         private BaseSecurity application;
 
+        private BaseSecurity auth;
+
+        private Long ttl;
+
+        private Long refreshTtl;
+
         @Data
         public static class BaseSecurity {
 
@@ -41,5 +47,25 @@ public class ApplicationSettingProperty {
             private boolean featSkipApproach;
             private boolean featReprocessApproach;
         }
+    }
+
+    public String getAppKey() {
+        return security.getApplication().getKey();
+    }
+
+    public String getAppSecret() {
+        return security.getApplication().getValue();
+    }
+
+    public String getJwtSecret() {
+        return security.getAuth().getValue();
+    }
+
+    public Long getTtl() {
+        return security.getTtl();
+    }
+
+    public Long getRefreshTtl() {
+        return security.getRefreshTtl();
     }
 }
