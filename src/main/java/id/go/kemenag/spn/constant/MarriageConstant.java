@@ -40,4 +40,12 @@ public class MarriageConstant {
         KONG_HU_CHU,
         BELIEVE,
     }
+
+    public enum LocationType {
+        BRIDE_HOME,
+        GROOM_HOME,
+        BRIDE_KUA,
+        GROOM_KUA,
+        OTHER
+    }
 }

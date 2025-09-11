@@ -1,23 +1,26 @@
 package id.go.kemenag.spn.service.impl.marriage;
 
+import id.go.kemenag.spn.constant.ActivityIdConstant;
 import id.go.kemenag.spn.constant.ApplicationConstant;
 import id.go.kemenag.spn.constant.MarriageConstant;
+import id.go.kemenag.spn.dto.application.request.ApplicationMarriageApproveRequest;
 import id.go.kemenag.spn.dto.application.request.ApplicationMarriageCreateRequest;
 import id.go.kemenag.spn.dto.application.request.ApplicationMarriageRequest;
-import id.go.kemenag.spn.dto.application.response.ApplicationMarriageResponse;
-import id.go.kemenag.spn.dto.application.response.ApplicationMarriageStatusResponse;
-import id.go.kemenag.spn.dto.application.response.ApplicationMarriageCreateResponse;
+import id.go.kemenag.spn.dto.application.request.ApplicationMarriageUpdateRequest;
+import id.go.kemenag.spn.dto.application.response.*;
+import id.go.kemenag.spn.dto.camunda.request.CamundaCompleteUserTaskRequest;
 import id.go.kemenag.spn.dto.marriage.request.MarriageCreateRequest;
 import id.go.kemenag.spn.dto.previouspartner.request.PreviousPartnerCreateRequest;
 import id.go.kemenag.spn.entity.Application;
 import id.go.kemenag.spn.entity.marriage.*;
+import id.go.kemenag.spn.exception.BusinessErrorException;
+import id.go.kemenag.spn.exception.BusinessErrorsException;
 import id.go.kemenag.spn.mapper.*;
 import id.go.kemenag.spn.service.*;
 import id.go.kemenag.spn.service.marriage.ApplicationMarriageService;
 import id.go.kemenag.spn.service.marriage.BrideService;
 import id.go.kemenag.spn.service.marriage.GroomService;
 import id.go.kemenag.spn.service.marriage.MarriageService;
-import id.go.kemenag.spn.util.ErrorUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -73,6 +76,12 @@ public class ApplicationMarriageServiceImpl implements ApplicationMarriageServic
     @Autowired
     private CamundaService camundaService;
 
+    @Autowired
+    private ApplicationHandlerService applicationHandlerService;
+
+    @Autowired
+    private AuthService authService;
+
     @Override
     public ApplicationMarriageCreateResponse createMarriage(ApplicationMarriageCreateRequest request) {
         var application = Application
@@ -91,18 +100,25 @@ public class ApplicationMarriageServiceImpl implements ApplicationMarriageServic
         var previousGroomPartner = this.processGroomPreviousPartner(request);
         var previousBridePartner = this.processBridePreviousPartner(request);
 
-        var processId = this.camundaService.invokeProcess(application.getType(), application.getId());
+        var cancelled = this.applicationHandlerService.setInitialHandler(application, request);
+
+        var bride = this.processBride(application, request, brideFather, brideMother, guardian, previousBridePartner);
+        var groom = this.processGroom(application, request, groomFather, groomMother, previousGroomPartner);
+        var marriage = this.processMarriage(request.getMarriage(), application, bride, groom);
+
+        var processId = this.camundaService.invokeProcess(
+            cancelled,
+            marriage,
+            request.getGroom().getReligion().equals(request.getBride().getReligion())
+        );
         application.setProcessId(processId);
         application = this.applicationService.save(application);
-
-        this.processBride(application, request, brideFather, brideMother, guardian, previousBridePartner);
-        this.processGroom(application, request, groomFather, groomMother, previousGroomPartner);
-        this.processMarriage(request.getMarriage(), application);
 
         return ApplicationMarriageCreateResponse
             .builder()
             .applicationId(application.getId())
             .processId(processId)
+            .status(cancelled ? ApplicationConstant.Status.CANCELLED : ApplicationConstant.Status.CREATED)
             .build();
     }
 
@@ -124,12 +140,11 @@ public class ApplicationMarriageServiceImpl implements ApplicationMarriageServic
     @Override
     public List<ApplicationMarriageResponse> findAllApplication() {
         var applications = this.applicationService
-            .findAllAndStatusInAndType(
+            .findAllByStatusInAndType(
                 List.of(ApplicationConstant.Status.PROCESSED),
                 ApplicationConstant.Type.MARRIAGE
             );
 
-        System.out.println(applications);
         if (applications.isEmpty()) {
             return List.of();
         }
@@ -168,6 +183,182 @@ public class ApplicationMarriageServiceImpl implements ApplicationMarriageServic
             .collect(Collectors.toList());
     }
 
+    @Override
+    public ApplicationMarriageResponse findApplicationById(UUID applicationId) {
+        var application = this.applicationService.findById(applicationId);
+        if (application == null) {
+            throw new BusinessErrorException(HttpStatus.NOT_FOUND, "Application not found");
+        }
+
+        var marriage = this.marriageService.findByApplicationId(applicationId);
+        if (marriage == null) {
+            throw new BusinessErrorException(HttpStatus.NOT_FOUND, "Marriage not found for application");
+        }
+
+        return this.buildApplicationMarriageResponse(
+            application,
+            marriage.getBride(),
+            marriage.getGroom(),
+            marriage
+        );
+    }
+
+    @Override
+    public List<ApplicationMarriageResponse> findAllApplicationBasedOnHandler() {
+        var user = this.authService.getCurrentUser();
+        if (user == null) {
+            throw new BusinessErrorException(HttpStatus.FORBIDDEN, "You are not authorized to access application");
+        }
+
+        var applications = this.applicationService
+            .findAllABasedOnHandler(
+                List.of(ApplicationConstant.Status.PROCESSED),
+                ApplicationConstant.Type.MARRIAGE,
+                user.getRole(),
+                user.getWorkplaceCode()
+            );
+
+        if (applications.isEmpty()) {
+            return List.of();
+        }
+
+        var applicationIds = this.applicationService.collectIds(applications);
+        var brides = this.brideService.findAllByApplicationIds(applicationIds);
+        var grooms = this.groomService.findAllByApplicationIds(applicationIds);
+        var marriages = this.marriageService.findAllByApplicationIds(applicationIds);
+
+        Map<UUID, Bride> brideMap = brides
+            .stream()
+            .collect(Collectors.toMap(b -> b.getApplication().getId(), Function.identity()));
+
+        Map<UUID, Groom> groomMap = grooms
+            .stream()
+            .collect(Collectors.toMap(g -> g.getApplication().getId(), Function.identity()));
+
+        Map<UUID, Marriage> marriageMap = marriages
+            .stream()
+            .collect(Collectors.toMap(m -> m.getApplication().getId(), Function.identity()));
+
+        return applications
+            .stream()
+            .map(application -> {
+                var bride = brideMap.get(application.getId());
+                var groom = groomMap.get(application.getId());
+                var marriage = marriageMap.get(application.getId());
+
+                if (bride != null && groom != null && marriage != null) {
+                    return this.buildApplicationMarriageResponse(application, bride, groom, marriage);
+                }
+
+                return null;
+            })
+            .filter(Objects::nonNull)
+            .collect(Collectors.toList());
+    }
+
+    @Override
+    public ApplicationMarriageResponse findApplicationByIdBasedOnHandler(UUID applicationId) {
+        var user = this.authService.getCurrentUser();
+        if (user == null) {
+            throw new BusinessErrorException(HttpStatus.FORBIDDEN, "You are not authorized to access application");
+        }
+
+        var application = this.applicationService.findByIdBasedOnHandler(
+            applicationId,
+            user.getRole(),
+            user.getWorkplaceCode()
+        );
+
+        if (application == null) {
+            throw new BusinessErrorException(HttpStatus.NOT_FOUND, "Application not found");
+        }
+
+        var marriage = this.marriageService.findByApplicationId(applicationId);
+        if (marriage == null) {
+            throw new BusinessErrorException(HttpStatus.NOT_FOUND, "Marriage not found for application");
+        }
+
+        return this.buildApplicationMarriageResponse(
+            application,
+            marriage.getBride(),
+            marriage.getGroom(),
+            marriage
+        );
+    }
+
+    @Override
+    public ApplicationMarriageApproveResponse approveApplication(ApplicationMarriageApproveRequest request) {
+        var marriage = this.marriageService.findByApplicationId(request.getApplicationId());
+        if (marriage == null) {
+            throw new BusinessErrorException(HttpStatus.NOT_FOUND, "Application not found");
+        }
+
+        var handler = this.applicationHandlerService.validateHandler(request.getApplicationId());
+
+        Map<String, Object>  resultMap = new HashMap<>();
+
+        List<String> taskNames = new ArrayList<>(
+            List.of(
+                ActivityIdConstant.ACTIVITY_VILLAGE_1_REGISTRAR,
+                ActivityIdConstant.ACTIVITY_VILLAGE_1_HEADMAN,
+                ActivityIdConstant.ACTIVITY_RELIGIOUS_AFFAIRS_1_OFFICER,
+                ActivityIdConstant.ACTIVITY_RELIGIOUS_AFFAIRS_1_APPROVER,
+                ActivityIdConstant.ACTIVITY_VILLAGE_2_REGISTRAR,
+                ActivityIdConstant.ACTIVITY_VILLAGE_2_HEADMAN,
+                ActivityIdConstant.ACTIVITY_RELIGIOUS_AFFAIRS_2_OFFICER,
+                ActivityIdConstant.ACTIVITY_RELIGIOUS_AFFAIRS_2_APPROVER
+            )
+        );
+
+        resultMap.put("approvedStatus", request.getApprovedStatus().name());
+
+        this.camundaService.completeUserTask(
+            CamundaCompleteUserTaskRequest
+                .builder()
+                .processInstanceId(String.valueOf(marriage.getApplication().getProcessId()))
+                .taskNames(taskNames)
+                .resultMap(resultMap)
+                .build(),
+            handler
+        );
+
+        return ApplicationMarriageApproveResponse
+            .builder()
+            .applicationId(marriage.getApplication().getId())
+            .approvedStatus(request.getApprovedStatus())
+            .build();
+    }
+
+    @Override
+    public ApplicationMarriageUpdateResponse updateApplicationById(UUID applicationId, ApplicationMarriageUpdateRequest request) {
+        var marriage = this.marriageService.findByApplicationId(applicationId);
+        if (marriage == null) {
+            throw new BusinessErrorException(HttpStatus.NOT_FOUND, "Application not found");
+        }
+
+        this.applicationHandlerService.validateHandler(applicationId);
+
+        this.groomFatherMapper.copy(request.getGroomFather(), marriage.getGroom().getGroomFather());
+        this.groomMotherMapper.copy(request.getGroomMother(), marriage.getGroom().getGroomMother());
+        this.brideFatherMapper.copy(request.getBrideFather(), marriage.getBride().getBrideFather());
+        this.brideMotherMapper.copy(request.getBrideMother(), marriage.getBride().getBrideMother());
+        this.guardianMapper.copy(request.getGuardian(), marriage.getBride().getGuardian());
+        this.previousPartnerMapper.copy(request.getPreviousGroomPartner(), marriage.getGroom().getPreviousPartner());
+        this.previousPartnerMapper.copy(request.getPreviousBridePartner(), marriage.getBride().getPreviousPartner());
+
+        this.groomMapper.copy(request.getGroom(), marriage.getGroom());
+        this.brideMapper.copy(request.getBride(), marriage.getBride());
+
+        this.marriageMapper.copy(request.getMarriage(), marriage);
+
+        this.marriageService.save(marriage);
+
+        return ApplicationMarriageUpdateResponse
+            .builder()
+            .applicationId(applicationId)
+            .build();
+    }
+
     private void validateCoupleData(ApplicationMarriageRequest request, Groom groom, Bride bride) {
         Map<String, String> errors = new HashMap<>();
 
@@ -180,16 +371,16 @@ public class ApplicationMarriageServiceImpl implements ApplicationMarriageServic
         }
 
         if (!errors.isEmpty()) {
-            ErrorUtil.throwErrors("Data calon pengantin tidak ditemukan.", HttpStatus.NOT_FOUND, errors);
+            throw new BusinessErrorsException(HttpStatus.NOT_FOUND, "Data calon pengantin tidak ditemukan.", errors);
         }
 
         if (!groom.getApplication().getId().equals(bride.getApplication().getId())) {
             errors.put("data_mismatch", "Data calon pengantin tidak terdaftar dalam satu pengajuan yang sama.");
-            ErrorUtil.throwErrors("Data pengantin tidak cocok.", HttpStatus.BAD_REQUEST, errors);
+            throw new BusinessErrorsException(HttpStatus.BAD_REQUEST, "Data pengantin tidak cocok.", errors);
         }
     }
 
-    private void processBride(
+    private Bride processBride(
         Application application,
         ApplicationMarriageCreateRequest request,
         BrideFather brideFather,
@@ -230,7 +421,7 @@ public class ApplicationMarriageServiceImpl implements ApplicationMarriageServic
             .zipCode(request.getBride().getZipCode())
             .build();
 
-        this.brideService.save(bride);
+        return this.brideService.save(bride);
     }
 
     private BrideFather processBrideFather(ApplicationMarriageCreateRequest request) {
@@ -241,7 +432,7 @@ public class ApplicationMarriageServiceImpl implements ApplicationMarriageServic
         return this.brideMotherMapper.convert(request.getBrideMother());
     }
 
-    private void processGroom(
+    private Groom processGroom(
         Application application,
         ApplicationMarriageCreateRequest request,
         GroomFather groomFather,
@@ -262,25 +453,25 @@ public class ApplicationMarriageServiceImpl implements ApplicationMarriageServic
             .birthDate(request.getGroom().getBirthDate())
             .gender(request.getGroom().getGender())
             .job(request.getGroom().getJob())
-            .nationality(request.getBride().getNationality())
-            .religion(request.getBride().getReligion())
-            .maritalStatus(request.getBride().getMaritalStatus())
-            .phoneNumber(request.getBride().getPhoneNumber())
-            .provinceCode(request.getBride().getProvinceCode())
-            .provinceName(request.getBride().getProvinceName())
-            .cityCode(request.getBride().getCityCode())
-            .cityName(request.getBride().getCityName())
-            .districtCode(request.getBride().getDistrictCode())
-            .districtName(request.getBride().getDistrictName())
-            .subDistrictCode(request.getBride().getSubDistrictCode())
-            .subDistrictName(request.getBride().getSubDistrictName())
-            .address(request.getBride().getAddress())
-            .rw(request.getBride().getRw())
-            .rt(request.getBride().getRt())
-            .zipCode(request.getBride().getZipCode())
+            .nationality(request.getGroom().getNationality())
+            .religion(request.getGroom().getReligion())
+            .maritalStatus(request.getGroom().getMaritalStatus())
+            .phoneNumber(request.getGroom().getPhoneNumber())
+            .provinceCode(request.getGroom().getProvinceCode())
+            .provinceName(request.getGroom().getProvinceName())
+            .cityCode(request.getGroom().getCityCode())
+            .cityName(request.getGroom().getCityName())
+            .districtCode(request.getGroom().getDistrictCode())
+            .districtName(request.getGroom().getDistrictName())
+            .subDistrictCode(request.getGroom().getSubDistrictCode())
+            .subDistrictName(request.getGroom().getSubDistrictName())
+            .address(request.getGroom().getAddress())
+            .rw(request.getGroom().getRw())
+            .rt(request.getGroom().getRt())
+            .zipCode(request.getGroom().getZipCode())
             .build();
 
-        this.groomService.save(groom);
+        return this.groomService.save(groom);
     }
 
     private GroomFather processGroomFather(ApplicationMarriageCreateRequest request) {
@@ -295,11 +486,15 @@ public class ApplicationMarriageServiceImpl implements ApplicationMarriageServic
         return this.guardianMapper.convert(request.getGuardian());
     }
 
-    private void processMarriage(MarriageCreateRequest request, Application application) {
+    private Marriage processMarriage(
+        MarriageCreateRequest request, Application application, Bride bride, Groom groom
+    ) {
         var marriage = this.marriageMapper.convert(request);
         marriage.setApplication(application);
+        marriage.setBride(bride);
+        marriage.setGroom(groom);
 
-        this.marriageService.save(marriage);
+        return this.marriageService.save(marriage);
     }
 
     private PreviousPartner processGroomPreviousPartner(ApplicationMarriageCreateRequest request) {
@@ -324,9 +519,8 @@ public class ApplicationMarriageServiceImpl implements ApplicationMarriageServic
         boolean isPreviousPartnerMissing = previousPartnerDto == null;
 
         if (isNotSingle && isPreviousPartnerMissing) {
-            ErrorUtil.throwError(
-                "Data pasangan sebelumnya wajib diisi jika status pernikahan bukan lajang",
-                HttpStatus.BAD_REQUEST
+            throw new BusinessErrorException(HttpStatus.BAD_REQUEST,
+                "Data pasangan sebelumnya wajib diisi jika status pernikahan bukan lajang"
             );
         }
 
@@ -368,6 +562,5 @@ public class ApplicationMarriageServiceImpl implements ApplicationMarriageServic
             .previousGroomPartner(groomPreviousPartnerResponse)
             .marriage(marriageResponse)
             .build();
-
     }
 }

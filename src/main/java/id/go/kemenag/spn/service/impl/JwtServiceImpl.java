@@ -3,10 +3,14 @@ package id.go.kemenag.spn.service.impl;
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.interfaces.DecodedJWT;
+import id.go.kemenag.spn.config.custom.CustomUserDetails;
 import id.go.kemenag.spn.config.property.ApplicationSettingProperty;
+import id.go.kemenag.spn.exception.BusinessErrorException;
 import id.go.kemenag.spn.service.JwtService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
@@ -43,6 +47,8 @@ public class JwtServiceImpl implements JwtService {
     @Override
     public String generateAccessToken(Map<String, Object> claims, UserDetails user) {
         Instant now = Instant.now();
+        var customUser = (CustomUserDetails) user;
+
         return JWT.create()
             .withSubject(user.getUsername())
             .withIssuedAt(Date.from(now))
@@ -51,6 +57,9 @@ public class JwtServiceImpl implements JwtService {
                 .stream()
                 .map(GrantedAuthority::getAuthority)
                 .collect(Collectors.toList()))
+            .withClaim("workplaceCode", customUser.getWorkplaceCode())
+            .withClaim("workplaceName", customUser.getWorkplaceName())
+            .withClaim("role", customUser.getRole().name())
             .withPayload(claims)
             .sign(algorithm());
     }

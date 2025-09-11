@@ -64,6 +64,7 @@ public class Bride extends BaseEntity {
     private LocalDate birthDate;
 
     @Column
+    @Enumerated(EnumType.STRING)
     private MarriageConstant.Gender gender;
 
     @Column
@@ -73,9 +74,11 @@ public class Bride extends BaseEntity {
     private String nationality;
 
     @Column
+    @Enumerated(EnumType.STRING)
     private MarriageConstant.Religion religion;
 
     @Column
+    @Enumerated(EnumType.STRING)
     private MarriageConstant.MaritalStatus maritalStatus;
 
     @Column

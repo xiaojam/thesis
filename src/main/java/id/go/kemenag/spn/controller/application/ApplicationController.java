@@ -18,11 +18,11 @@ import org.springframework.web.bind.annotation.*;
 @Tag(name = "Application", description = "Application API")
 public class ApplicationController {
 
-    final ApplicationMarriageService applicationService;
+    final ApplicationMarriageService applicationMarriageService;
 
     @Autowired
-    public ApplicationController(ApplicationMarriageService applicationService) {
-        this.applicationService = applicationService;
+    public ApplicationController(ApplicationMarriageService applicationMarriageService) {
+        this.applicationMarriageService = applicationMarriageService;
     }
 
     @PostMapping(value = "/marriage", produces = "application/json")
@@ -30,7 +30,7 @@ public class ApplicationController {
     @PreAuthorize("@apiKeyChecker.isValid()")
     @Operation(summary = "create", description = "create a new marriage application")
     ApplicationMarriageCreateResponse createMarriage(@RequestBody @Valid ApplicationMarriageCreateRequest request) {
-        return this.applicationService.createMarriage(request);
+        return this.applicationMarriageService.createMarriage(request);
     }
 
     @PostMapping(value = "/divorce", produces = "application/json")
@@ -38,7 +38,7 @@ public class ApplicationController {
     @PreAuthorize("@apiKeyChecker.isValid()")
     @Operation(summary = "create", description = "create a new divorce application")
     ApplicationMarriageCreateResponse createDivorce(@RequestBody @Valid ApplicationMarriageCreateRequest request) {
-        return this.applicationService.createMarriage(request);
+        return this.applicationMarriageService.createMarriage(request);
     }
 
     @GetMapping(value = "/marriage/status", produces = "application/json")
@@ -46,6 +46,6 @@ public class ApplicationController {
     @PreAuthorize("@apiKeyChecker.isValid()")
     @Operation(summary = "get", description = "get application status by id")
     ApplicationMarriageStatusResponse checkMarriageStatus(@RequestBody @Valid ApplicationMarriageRequest request) {
-        return this.applicationService.checkMarriageStatus(request);
+        return this.applicationMarriageService.checkMarriageStatus(request);
     }
 }

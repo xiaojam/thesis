@@ -9,6 +9,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.UuidGenerator;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @Data
@@ -33,4 +35,7 @@ public class Application extends BaseEntity {
     @Column
     @Enumerated(EnumType.STRING)
     private ApplicationConstant.Type type;
+
+    @OneToMany(mappedBy = "application", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private List<ApplicationHandler> applicationHandler = new ArrayList<>();
 }

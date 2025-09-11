@@ -11,6 +11,7 @@ CREATE TABLE IF NOT EXISTS guardian (
     nationality TEXT NOT NULL DEFAULT 'Indonesia',
     religion TEXT NOT NULL DEFAULT 'ISLAM',
     marital_status TEXT NOT NULL DEFAULT 'SINGLE',
+    status TEXT NOT NULL DEFAULT 'NASAB',
     father_name TEXT NULL,
     province_code TEXT NULL,
     province_name TEXT NULL,
