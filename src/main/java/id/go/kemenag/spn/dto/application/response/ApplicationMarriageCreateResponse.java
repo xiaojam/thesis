@@ -1,6 +1,7 @@
 package id.go.kemenag.spn.dto.application.response;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import id.go.kemenag.spn.constant.ApplicationConstant;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -19,4 +20,7 @@ public class ApplicationMarriageCreateResponse {
 
     @JsonProperty("process_id")
     private UUID processId;
+
+    @JsonProperty("status")
+    private ApplicationConstant.Status status;
 }

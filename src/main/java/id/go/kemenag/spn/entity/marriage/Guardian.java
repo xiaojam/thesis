@@ -24,7 +24,6 @@ public class Guardian extends BaseEntity {
     @UuidGenerator(style = UuidGenerator.Style.AUTO)
     private UUID id;
 
-
     @Column
     private String firstName;
 
@@ -45,6 +44,7 @@ public class Guardian extends BaseEntity {
     private LocalDate birthDate;
 
     @Column
+    @Enumerated(EnumType.STRING)
     private MarriageConstant.Gender gender;
 
     @Column
@@ -54,10 +54,16 @@ public class Guardian extends BaseEntity {
     private String nationality;
 
     @Column
+    @Enumerated(EnumType.STRING)
     private MarriageConstant.Religion religion;
 
     @Column
+    @Enumerated(EnumType.STRING)
     private MarriageConstant.MaritalStatus maritalStatus;
+
+    @Column
+    @Enumerated(EnumType.STRING)
+    private MarriageConstant.GuardianStatus status;
 
     @Column
     private String fatherName;

@@ -16,4 +16,9 @@ public class DocumentConstant {
         N8, // Pemeriksaan Nikah
         WN, // Keterangan Wali Nikah
     }
+
+    public enum ServiceType {
+        MARRIAGE,
+        DIVORCE,
+    }
 }

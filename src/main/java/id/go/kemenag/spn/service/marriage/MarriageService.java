@@ -10,4 +10,6 @@ public interface MarriageService {
     Marriage save(Marriage marriage);
 
     List<Marriage> findAllByApplicationIds(List<UUID> applicationIds);
+
+    Marriage findByApplicationId(UUID applicationId);
 }

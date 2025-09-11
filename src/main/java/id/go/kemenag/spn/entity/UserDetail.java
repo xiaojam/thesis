@@ -14,8 +14,7 @@ import java.util.UUID;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@Table(name = "\"user\"")
-public class User extends BaseEntity {
+public class UserDetail extends BaseEntity {
 
     @Column
     @Id

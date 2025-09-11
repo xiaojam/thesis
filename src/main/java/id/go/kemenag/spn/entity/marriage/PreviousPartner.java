@@ -50,6 +50,7 @@ public class PreviousPartner extends BaseEntity {
     private LocalDate deathDate;
 
     @Column
+    @Enumerated(EnumType.STRING)
     private MarriageConstant.Gender gender;
 
     @Column
@@ -59,6 +60,7 @@ public class PreviousPartner extends BaseEntity {
     private String nationality;
 
     @Column
+    @Enumerated(EnumType.STRING)
     private MarriageConstant.Religion religion;
 
     @Column

@@ -28,4 +28,9 @@ public class MarriageServiceImpl implements MarriageService {
             .stream()
             .toList();
     }
+
+    @Override
+    public Marriage findByApplicationId(UUID applicationId) {
+        return this.marriageRepository.findByApplicationIdAndDeletedFalse(applicationId).orElse(null);
+    }
 }

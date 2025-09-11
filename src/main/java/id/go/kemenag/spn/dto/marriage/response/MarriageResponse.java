@@ -1,6 +1,7 @@
 package id.go.kemenag.spn.dto.marriage.response;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import id.go.kemenag.spn.constant.MarriageConstant;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -58,4 +59,7 @@ public class MarriageResponse {
 
     @JsonProperty("zip_code")
     private String zipCode;
+
+    @JsonProperty("location_type")
+    private MarriageConstant.LocationType locationType;
 }

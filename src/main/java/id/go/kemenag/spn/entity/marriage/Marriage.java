@@ -1,5 +1,6 @@
 package id.go.kemenag.spn.entity.marriage;
 
+import id.go.kemenag.spn.constant.MarriageConstant;
 import id.go.kemenag.spn.entity.Application;
 import id.go.kemenag.spn.entity.base.BaseEntity;
 import jakarta.persistence.*;
@@ -25,6 +26,14 @@ public class Marriage extends BaseEntity {
     @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JoinColumn(name = "application_id", referencedColumnName = "id")
     private Application application;
+
+    @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JoinColumn(name = "bride_id", referencedColumnName = "id")
+    private Bride bride;
+
+    @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JoinColumn(name = "groom_id", referencedColumnName = "id")
+    private Groom groom;
 
     @Column
     private LocalDateTime datetime;
@@ -70,4 +79,8 @@ public class Marriage extends BaseEntity {
 
     @Column
     private String zipCode;
+
+    @Column
+    @Enumerated(EnumType.STRING)
+    private MarriageConstant.LocationType locationType;
 }

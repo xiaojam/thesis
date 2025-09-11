@@ -1,5 +1,7 @@
 package id.go.kemenag.spn.controller.user;
 
+import id.go.kemenag.spn.constant.ApplicationConstant;
+import id.go.kemenag.spn.constant.AuthConstant;
 import id.go.kemenag.spn.dto.user.request.CreateUserRequest;
 import id.go.kemenag.spn.dto.user.response.UserResponse;
 import id.go.kemenag.spn.service.UserService;
@@ -25,7 +27,7 @@ public class UserController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    @PreAuthorize("hasRole('DEFAULT')")
+    @PreAuthorize(AuthConstant.ROLE_ADMIN)
     @Operation(summary = "test documentation summary", description = "test documentation description")
     UserResponse createUser(@RequestBody @Valid CreateUserRequest request) {
         return this.userService.createUser(request);
@@ -33,7 +35,7 @@ public class UserController {
 
     @GetMapping("check-availability")
     @ResponseStatus(HttpStatus.OK)
-    @PreAuthorize("hasRole('DEFAULT')")
+    @PreAuthorize(AuthConstant.ROLE_ADMIN)
     @Operation(summary = "check username availability", description = "check if a username is available" )
     Boolean checkUsernameAvailability(@RequestParam String username) {
         return this.userService.checkUsernameAvailability(username);

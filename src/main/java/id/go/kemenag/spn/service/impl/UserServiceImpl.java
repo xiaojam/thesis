@@ -1,26 +1,21 @@
 package id.go.kemenag.spn.service.impl;
 
+import id.go.kemenag.spn.config.custom.CustomUserDetails;
 import id.go.kemenag.spn.constant.AuthConstant;
 import id.go.kemenag.spn.dto.user.request.CreateUserRequest;
 import id.go.kemenag.spn.dto.user.response.UserResponse;
-import id.go.kemenag.spn.entity.User;
+import id.go.kemenag.spn.entity.UserDetail;
 import id.go.kemenag.spn.exception.BusinessErrorException;
 import id.go.kemenag.spn.repository.UserRepository;
 import id.go.kemenag.spn.service.UserService;
 import id.go.kemenag.spn.util.AuthUtil;
-import id.go.kemenag.spn.util.ErrorUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.HashSet;
-import java.util.Set;
 
 @Service
 public class UserServiceImpl implements UserService, UserDetailsService {
@@ -31,18 +26,10 @@ public class UserServiceImpl implements UserService, UserDetailsService {
     @Override
     @Transactional(readOnly = true)
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        Set<GrantedAuthority> authorities = new HashSet<>();
-
         var user = this.findUserByUsername(username);
 
         if (user != null) {
-            authorities.add(new SimpleGrantedAuthority(AuthUtil.hasRole(user.getRole())));
-
-            return new org.springframework.security.core.userdetails.User(
-                username,
-                user.getPassword(),
-                authorities
-            );
+            return CustomUserDetails.fromEntity(user);
         }
 
         throw new BusinessErrorException(HttpStatus.NOT_FOUND, "User not found with username: " + username);
@@ -51,15 +38,15 @@ public class UserServiceImpl implements UserService, UserDetailsService {
     @Override
     public UserResponse createUser(CreateUserRequest request) {
         if (!request.getPassword().equals(request.getVerifyPassword())) {
-            ErrorUtil.throwError("Password and Verify Password do not match", HttpStatus.BAD_REQUEST);
+            throw new BusinessErrorException(HttpStatus.BAD_REQUEST, "Password and Verify Password do not match");
         }
 
-        var checkUser = this.userRepository.findByUsernameAndDeletedFalse(request.getUsername());
+        var checkUser = this.userRepository.findFirstByUsernameAndDeletedFalse(request.getUsername());
         if (checkUser.isPresent()) {
-            ErrorUtil.throwError("Username already exists", HttpStatus.BAD_REQUEST);
+            throw new BusinessErrorException(HttpStatus.BAD_REQUEST, "Username already exists");
         }
 
-        var newUser = User
+        var newUser = UserDetail
             .builder()
             .username(request.getUsername().toLowerCase())
             .role(request.getRole())
@@ -85,12 +72,17 @@ public class UserServiceImpl implements UserService, UserDetailsService {
         return this.findUserByUsername(username) != null;
     }
 
-    private User findUserByUsernameAndPassword(String username, String password) {
-        var passwordHash = AuthUtil.hash(password);
-        return this.userRepository.findByUsernameAndPasswordAndDeletedFalse(username, passwordHash).orElse(null);
+    @Override
+    public UserDetail findByWorkplaceCodeAndRole(String workplaceCode, AuthConstant.Role role) {
+        return this.userRepository.findFirstByRoleAndWorkplaceCodeAndDeletedFalse(role, workplaceCode).orElse(null);
     }
 
-    private User findUserByUsername(String username) {
-        return this.userRepository.findByUsernameAndDeletedFalse(username).orElse(null);
+    private UserDetail findUserByUsernameAndPassword(String username, String password) {
+        var passwordHash = AuthUtil.hash(password);
+        return this.userRepository.findFirstByUsernameAndPasswordAndDeletedFalse(username, passwordHash).orElse(null);
+    }
+
+    private UserDetail findUserByUsername(String username) {
+        return this.userRepository.findFirstByUsernameAndDeletedFalse(username).orElse(null);
     }
 }

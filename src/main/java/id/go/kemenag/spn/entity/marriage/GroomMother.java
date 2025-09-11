@@ -50,6 +50,7 @@ public class GroomMother extends BaseEntity {
     private String nationality;
 
     @Column
+    @Enumerated(EnumType.STRING)
     private MarriageConstant.Religion religion;
 
     @Column

@@ -50,6 +50,9 @@ public class GuardianResponse {
     @JsonProperty("marital_status")
     private MarriageConstant.MaritalStatus maritalStatus;
 
+    @JsonProperty("status")
+    private MarriageConstant.GuardianStatus status;
+
     @JsonProperty("father_name")
     private String fatherName;
 
