@@ -3,6 +3,7 @@ package id.go.kemenag.spn.service.impl;
 import id.go.kemenag.spn.config.custom.CustomUserDetails;
 import id.go.kemenag.spn.constant.AuthConstant;
 import id.go.kemenag.spn.constant.MarriageConstant;
+import id.go.kemenag.spn.dto.application.request.ApplicationDivorceCreateRequest;
 import id.go.kemenag.spn.dto.application.request.ApplicationMarriageCreateRequest;
 import id.go.kemenag.spn.entity.Application;
 import id.go.kemenag.spn.entity.ApplicationHandler;
@@ -40,7 +41,7 @@ public class ApplicationHandlerServiceImpl implements ApplicationHandlerService 
     }
 
     @Override
-    public Boolean setInitialHandler(Application application, ApplicationMarriageCreateRequest request) {
+    public Boolean setInitialMarriageHandler(Application application, ApplicationMarriageCreateRequest request) {
         var locationType = request.getMarriage().getLocationType();
         if (List.of(MarriageConstant.LocationType.BRIDE_HOME, MarriageConstant.LocationType.BRIDE_KUA).contains(locationType)) {
             return this.buildInitialHandler(application, request.getGroom().getSubDistrictCode());
@@ -51,6 +52,11 @@ public class ApplicationHandlerServiceImpl implements ApplicationHandlerService 
         }
 
         return Boolean.TRUE;
+    }
+
+    @Override
+    public Boolean setInitialDivorceHandler(Application application, ApplicationDivorceCreateRequest request) {
+        return null;
     }
 
     public Boolean buildInitialHandler(Application application, String subDistrictCode) {

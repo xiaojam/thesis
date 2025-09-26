@@ -1,4 +1,4 @@
-package id.go.kemenag.spn.activity;
+package id.go.kemenag.spn.activity.marriage;
 
 import id.go.kemenag.spn.constant.ApplicationConstant;
 import id.go.kemenag.spn.constant.AuthConstant;

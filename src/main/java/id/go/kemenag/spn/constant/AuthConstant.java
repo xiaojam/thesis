@@ -6,10 +6,10 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class AuthConstant {
+
     public AuthConstant() throws Exception {
         throw new Exception("Utility");
     }
-
 
     public enum Role {
         // Role Default untuk user yang belum di set rolenya

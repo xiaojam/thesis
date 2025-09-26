@@ -3,10 +3,7 @@ package id.go.kemenag.spn.service.impl.marriage;
 import id.go.kemenag.spn.constant.ActivityIdConstant;
 import id.go.kemenag.spn.constant.ApplicationConstant;
 import id.go.kemenag.spn.constant.MarriageConstant;
-import id.go.kemenag.spn.dto.application.request.ApplicationMarriageApproveRequest;
-import id.go.kemenag.spn.dto.application.request.ApplicationMarriageCreateRequest;
-import id.go.kemenag.spn.dto.application.request.ApplicationMarriageRequest;
-import id.go.kemenag.spn.dto.application.request.ApplicationMarriageUpdateRequest;
+import id.go.kemenag.spn.dto.application.request.*;
 import id.go.kemenag.spn.dto.application.response.*;
 import id.go.kemenag.spn.dto.camunda.request.CamundaCompleteUserTaskRequest;
 import id.go.kemenag.spn.dto.marriage.request.MarriageCreateRequest;
@@ -83,7 +80,7 @@ public class ApplicationMarriageServiceImpl implements ApplicationMarriageServic
     private AuthService authService;
 
     @Override
-    public ApplicationMarriageCreateResponse createMarriage(ApplicationMarriageCreateRequest request) {
+    public ApplicationCreateResponse createMarriage(ApplicationMarriageCreateRequest request) {
         var application = Application
             .builder()
             .type(ApplicationConstant.Type.MARRIAGE)
@@ -100,13 +97,13 @@ public class ApplicationMarriageServiceImpl implements ApplicationMarriageServic
         var previousGroomPartner = this.processGroomPreviousPartner(request);
         var previousBridePartner = this.processBridePreviousPartner(request);
 
-        var cancelled = this.applicationHandlerService.setInitialHandler(application, request);
+        var cancelled = this.applicationHandlerService.setInitialMarriageHandler(application, request);
 
         var bride = this.processBride(application, request, brideFather, brideMother, guardian, previousBridePartner);
         var groom = this.processGroom(application, request, groomFather, groomMother, previousGroomPartner);
         var marriage = this.processMarriage(request.getMarriage(), application, bride, groom);
 
-        var processId = this.camundaService.invokeProcess(
+        var processId = this.camundaService.invokeMarriageProcess(
             cancelled,
             marriage,
             request.getGroom().getReligion().equals(request.getBride().getReligion())
@@ -114,7 +111,7 @@ public class ApplicationMarriageServiceImpl implements ApplicationMarriageServic
         application.setProcessId(processId);
         application = this.applicationService.save(application);
 
-        return ApplicationMarriageCreateResponse
+        return ApplicationCreateResponse
             .builder()
             .applicationId(application.getId())
             .processId(processId)

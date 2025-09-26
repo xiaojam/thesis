@@ -13,7 +13,7 @@ import java.util.UUID;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class ApplicationMarriageCreateResponse {
+public class ApplicationCreateResponse {
 
     @JsonProperty("application_id")
     private UUID applicationId;
