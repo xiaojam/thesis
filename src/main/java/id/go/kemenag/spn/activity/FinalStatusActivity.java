@@ -22,8 +22,6 @@ public class FinalStatusActivity implements JavaDelegate {
     public void execute(DelegateExecution delegateExecution) throws Exception {
         UUID applicationId = (UUID) delegateExecution.getVariable(WorkflowConstant.APPLICATION_ID_VARIABLE);
 
-        log.info("Cancelled Application");
-
         var application = this.applicationService.findById(applicationId);
         application.setStatus(ApplicationConstant.Status.DONE);
         this.applicationService.save(application);

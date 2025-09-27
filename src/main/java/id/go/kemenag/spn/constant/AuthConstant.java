@@ -6,14 +6,16 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class AuthConstant {
+
     public AuthConstant() throws Exception {
         throw new Exception("Utility");
     }
 
-
     public enum Role {
         // Role Default untuk user yang belum di set rolenya
         DEFAULT("DEFAULT"),
+
+        // MARRIAGE
         // Petugas Pendaftaran Nikah di Desa
         REGISTRAR("REGISTRAR"),
         // Kepala Desa
@@ -22,6 +24,11 @@ public class AuthConstant {
         OFFICER("OFFICER"),
         // Kepala KUA
         APPROVER("APPROVER"),
+
+        // DIVORCE
+        // Hanya punya satu role
+        ADMINISTRATOR("ADMINISTRATOR"),
+
         USER("USER"),
         SUPER_USER("SUPER_USER");
 

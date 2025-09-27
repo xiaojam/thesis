@@ -1,5 +1,6 @@
 package id.go.kemenag.spn.service;
 
+import id.go.kemenag.spn.dto.application.request.ApplicationDivorceCreateRequest;
 import id.go.kemenag.spn.dto.application.request.ApplicationMarriageCreateRequest;
 import id.go.kemenag.spn.entity.Application;
 import id.go.kemenag.spn.entity.ApplicationHandler;
@@ -15,7 +16,14 @@ public interface ApplicationHandlerService {
      *
      * @return TRUE if location type isn't OTHER
      */
-    Boolean setInitialHandler(Application application, ApplicationMarriageCreateRequest request);
+    Boolean setInitialMarriageHandler(Application application, ApplicationMarriageCreateRequest request);
+
+    /**
+     *
+     * @return TRUE if location type isn't OTHER
+     */
+    Boolean setInitialDivorceHandler(Application application, ApplicationDivorceCreateRequest request);
+
 
     ApplicationHandler  validateHandler(UUID applicationId);
 

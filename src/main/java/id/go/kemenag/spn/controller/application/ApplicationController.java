@@ -1,9 +1,11 @@
 package id.go.kemenag.spn.controller.application;
 
+import id.go.kemenag.spn.dto.application.request.ApplicationDivorceCreateRequest;
 import id.go.kemenag.spn.dto.application.request.ApplicationMarriageCreateRequest;
 import id.go.kemenag.spn.dto.application.request.ApplicationMarriageRequest;
 import id.go.kemenag.spn.dto.application.response.ApplicationMarriageStatusResponse;
-import id.go.kemenag.spn.dto.application.response.ApplicationMarriageCreateResponse;
+import id.go.kemenag.spn.dto.application.response.ApplicationCreateResponse;
+import id.go.kemenag.spn.service.divorce.ApplicationDivorceService;
 import id.go.kemenag.spn.service.marriage.ApplicationMarriageService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -20,16 +22,22 @@ public class ApplicationController {
 
     final ApplicationMarriageService applicationMarriageService;
 
+    final ApplicationDivorceService applicationDivorceService;
+
     @Autowired
-    public ApplicationController(ApplicationMarriageService applicationMarriageService) {
+    public ApplicationController(
+        ApplicationMarriageService applicationMarriageService,
+        ApplicationDivorceService applicationDivorceService
+    ) {
         this.applicationMarriageService = applicationMarriageService;
+        this.applicationDivorceService = applicationDivorceService;
     }
 
     @PostMapping(value = "/marriage", produces = "application/json")
     @ResponseStatus(HttpStatus.CREATED)
     @PreAuthorize("@apiKeyChecker.isValid()")
     @Operation(summary = "create", description = "create a new marriage application")
-    ApplicationMarriageCreateResponse createMarriage(@RequestBody @Valid ApplicationMarriageCreateRequest request) {
+    ApplicationCreateResponse createMarriage(@RequestBody @Valid ApplicationMarriageCreateRequest request) {
         return this.applicationMarriageService.createMarriage(request);
     }
 
@@ -37,8 +45,8 @@ public class ApplicationController {
     @ResponseStatus(HttpStatus.CREATED)
     @PreAuthorize("@apiKeyChecker.isValid()")
     @Operation(summary = "create", description = "create a new divorce application")
-    ApplicationMarriageCreateResponse createDivorce(@RequestBody @Valid ApplicationMarriageCreateRequest request) {
-        return this.applicationMarriageService.createMarriage(request);
+    ApplicationCreateResponse createDivorce(@RequestBody @Valid ApplicationDivorceCreateRequest request) {
+        return this.applicationDivorceService.createDivorce(request);
     }
 
     @GetMapping(value = "/marriage/status", produces = "application/json")

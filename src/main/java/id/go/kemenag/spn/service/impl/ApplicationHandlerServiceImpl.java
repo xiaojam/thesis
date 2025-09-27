@@ -3,6 +3,7 @@ package id.go.kemenag.spn.service.impl;
 import id.go.kemenag.spn.config.custom.CustomUserDetails;
 import id.go.kemenag.spn.constant.AuthConstant;
 import id.go.kemenag.spn.constant.MarriageConstant;
+import id.go.kemenag.spn.dto.application.request.ApplicationDivorceCreateRequest;
 import id.go.kemenag.spn.dto.application.request.ApplicationMarriageCreateRequest;
 import id.go.kemenag.spn.entity.Application;
 import id.go.kemenag.spn.entity.ApplicationHandler;
@@ -11,6 +12,8 @@ import id.go.kemenag.spn.repository.ApplicationHandlerRepository;
 import id.go.kemenag.spn.service.ApplicationHandlerService;
 import id.go.kemenag.spn.service.AuthService;
 import id.go.kemenag.spn.service.UserService;
+import id.go.kemenag.spn.service.master.MasterService;
+import id.go.kemenag.spn.util.MasterUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.util.Streamable;
@@ -34,27 +37,65 @@ public class ApplicationHandlerServiceImpl implements ApplicationHandlerService 
     @Autowired
     private AuthService authService;
 
+    @Autowired
+    private MasterService masterService;
+
     @Override
     public ApplicationHandler save(ApplicationHandler applicationHandler) {
         return this.applicationHandlerRepository.save(applicationHandler);
     }
 
     @Override
-    public Boolean setInitialHandler(Application application, ApplicationMarriageCreateRequest request) {
+    public Boolean setInitialMarriageHandler(Application application, ApplicationMarriageCreateRequest request) {
         var locationType = request.getMarriage().getLocationType();
         if (List.of(MarriageConstant.LocationType.BRIDE_HOME, MarriageConstant.LocationType.BRIDE_KUA).contains(locationType)) {
-            return this.buildInitialHandler(application, request.getGroom().getSubDistrictCode());
+            return this.buildInitialMarriageHandler(application, request.getGroom().getSubDistrictCode());
         }
 
         if (List.of(MarriageConstant.LocationType.GROOM_HOME, MarriageConstant.LocationType.GROOM_KUA).contains(locationType)) {
-            return this.buildInitialHandler(application, request.getBride().getSubDistrictCode());
+            return this.buildInitialMarriageHandler(application, request.getBride().getSubDistrictCode());
         }
 
         return Boolean.TRUE;
     }
 
-    public Boolean buildInitialHandler(Application application, String subDistrictCode) {
-        log.info("Workplace Code: {}", subDistrictCode);
+    @Override
+    public Boolean setInitialDivorceHandler(Application application, ApplicationDivorceCreateRequest request) {
+        var cityCode = request.getPlaintiff().getCityCode();
+        var data = this.masterService.findByGroupNameAndCode("WILAYAH", cityCode);
+        if (data == null) {
+            return Boolean.TRUE;
+        }
+
+        var children = data.getChildren();
+        if (children == null || children.isEmpty()) {
+            return Boolean.TRUE;
+        }
+
+        var religiousCourt = MasterUtil.getReligiousCourt(data.getChildren());
+        if (religiousCourt == null) {
+            return Boolean.TRUE;
+        }
+        var user = this.userService.findByWorkplaceCodeAndRole(religiousCourt.getCode(), AuthConstant.Role.ADMINISTRATOR);
+
+        if (user != null) {
+            var handler = ApplicationHandler
+                .builder()
+                .role(AuthConstant.Role.ADMINISTRATOR)
+                .username(user.getUsername())
+                .workplaceCode(user.getWorkplaceCode())
+                .application(application)
+                .build();
+
+            this.applicationHandlerRepository.save(handler);
+
+            return Boolean.FALSE;
+        }
+
+        return Boolean.TRUE;
+    }
+
+    public Boolean buildInitialMarriageHandler(Application application, String subDistrictCode) {
         var user = this.userService.findByWorkplaceCodeAndRole(subDistrictCode, AuthConstant.Role.REGISTRAR);
 
         var handler = ApplicationHandler

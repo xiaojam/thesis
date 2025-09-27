@@ -1,6 +1,6 @@
 CREATE TABLE IF NOT EXISTS document_config (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    village_id UUID REFERENCES master(id) ON DELETE SET NULL,
+    workplace_id UUID REFERENCES master(id) ON DELETE SET NULL,
     head_name TEXT,
     numbering_format TEXT,
     last_sequence INTEGER DEFAULT 0,

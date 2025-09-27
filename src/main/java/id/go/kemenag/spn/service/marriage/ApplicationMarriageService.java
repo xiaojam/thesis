@@ -1,17 +1,15 @@
 package id.go.kemenag.spn.service.marriage;
 
-import id.go.kemenag.spn.dto.application.request.ApplicationMarriageApproveRequest;
-import id.go.kemenag.spn.dto.application.request.ApplicationMarriageCreateRequest;
-import id.go.kemenag.spn.dto.application.request.ApplicationMarriageRequest;
-import id.go.kemenag.spn.dto.application.request.ApplicationMarriageUpdateRequest;
+import id.go.kemenag.spn.dto.application.request.*;
 import id.go.kemenag.spn.dto.application.response.*;
+import jakarta.validation.Valid;
 
 import java.util.List;
 import java.util.UUID;
 
 public interface ApplicationMarriageService {
 
-    ApplicationMarriageCreateResponse createMarriage(ApplicationMarriageCreateRequest request);
+    ApplicationCreateResponse createMarriage(ApplicationMarriageCreateRequest request);
 
     ApplicationMarriageStatusResponse checkMarriageStatus(ApplicationMarriageRequest request);
 

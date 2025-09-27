@@ -7,6 +7,7 @@ import id.go.kemenag.spn.constant.WorkflowConstant;
 import id.go.kemenag.spn.dto.camunda.request.CamundaCompleteUserTaskRequest;
 import id.go.kemenag.spn.entity.Application;
 import id.go.kemenag.spn.entity.ApplicationHandler;
+import id.go.kemenag.spn.entity.divorce.DivorceCase;
 import id.go.kemenag.spn.entity.marriage.Marriage;
 import id.go.kemenag.spn.exception.BusinessErrorException;
 import id.go.kemenag.spn.service.CamundaService;
@@ -36,7 +37,7 @@ public class CamundaServiceImpl implements CamundaService {
     private ApplicationFeatureConfigProperty featureConfig;
 
     @Override
-    public UUID invokeProcess(
+    public UUID invokeMarriageProcess(
         boolean cancelled,
         Marriage marriage,
         boolean isMuslim
@@ -50,11 +51,11 @@ public class CamundaServiceImpl implements CamundaService {
         variables.put(WorkflowConstant.APPLICATION_TYPE_VARIABLE, type.name());
         variables.put(
             WorkflowConstant.APPLICATION_STATUS_VARIABLE,
-            cancelled ? ApplicationConstant.Status.CANCELLED : ApplicationConstant.Status.CREATED.toString()
+            cancelled ? ApplicationConstant.Status.CANCELLED : ApplicationConstant.Status.CREATED.name()
         );
+        variables.put(WorkflowConstant.CANCELLED_APPLICATION_VARIABLE, cancelled);
 
         if (type.equals(ApplicationConstant.Type.MARRIAGE)) {
-
             var bride = marriage.getBride();
             var brideDistrictCode = bride.getDistrictCode();
             var brideSubDistrictCode = bride.getSubDistrictCode();
@@ -80,6 +81,33 @@ public class CamundaServiceImpl implements CamundaService {
     }
 
     @Override
+    public UUID invokeDivorceProcess(boolean cancelled, DivorceCase divorceCase, boolean isMuslim) {
+        var application = divorceCase.getApplication();
+        var applicationId = application.getId();
+        var type = application.getType();
+
+        Map<String, Object> variables = new HashMap<>();
+        variables.put(WorkflowConstant.APPLICATION_ID_VARIABLE, application.getId());
+        variables.put(WorkflowConstant.APPLICATION_TYPE_VARIABLE, type.name());
+        variables.put(
+            WorkflowConstant.APPLICATION_STATUS_VARIABLE,
+            cancelled ? ApplicationConstant.Status.CANCELLED : ApplicationConstant.Status.CREATED.name()
+        );
+        variables.put(WorkflowConstant.MUSLIM_VARIABLE, isMuslim);
+        variables.put(WorkflowConstant.COURT_CITY_CODE_VARIABLE, divorceCase.getPlaintiff().getCityCode());
+        variables.put(WorkflowConstant.CASE_TYPE_VARIABLE, divorceCase.getCaseType().name());
+        variables.put(WorkflowConstant.CANCELLED_APPLICATION_VARIABLE, cancelled);
+
+        ProcessInstance processInstance = this.runtimeService.startProcessInstanceByKey(
+            WorkflowConstant.PROCESS_MAIN_KEY,
+            String.valueOf(applicationId),
+            variables
+        );
+
+        return UUID.fromString(processInstance.getProcessInstanceId());
+    }
+
+    @Override
     public void setVariable(String processInstanceId, String variableName, Object value) {
         this.runtimeService.setVariable(processInstanceId, variableName, value);
     }
@@ -88,7 +116,7 @@ public class CamundaServiceImpl implements CamundaService {
     public void completeUserTask(CamundaCompleteUserTaskRequest request, ApplicationHandler handler) {
         UUID applicationId = handler.getApplication().getId();
 
-        List<Task> tasks = taskService.createTaskQuery()
+        List<Task> tasks = this.taskService.createTaskQuery()
             .processInstanceId(request.getProcessInstanceId())
             .taskDefinitionKeyIn(request.getTaskNames().toArray(new String[0]))
             .list();
@@ -98,7 +126,7 @@ public class CamundaServiceImpl implements CamundaService {
             String subProcessInstanceId = this.getSubProcessInstanceId(request.getProcessInstanceId());
 
             if (subProcessInstanceId != null) {
-                tasks = taskService.createTaskQuery()
+                tasks = this.taskService.createTaskQuery()
                     .processInstanceId(subProcessInstanceId)
                     .taskDefinitionKeyIn(request.getTaskNames().toArray(new String[0]))
                     .list();
@@ -124,10 +152,10 @@ public class CamundaServiceImpl implements CamundaService {
             }
 
             if (task.getAssignee() == null) {
-                taskService.claim(task.getId(), handler.getUsername());
+                this.taskService.claim(task.getId(), handler.getUsername());
             }
 
-            taskService.complete(task.getId(), inputForm);
+            this.taskService.complete(task.getId(), inputForm);
 
             log.info(
                 "Task completed: id={}, key={}, name={}, processInstanceId={}, applicationId={}",

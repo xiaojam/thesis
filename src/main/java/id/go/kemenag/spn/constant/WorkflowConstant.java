@@ -23,4 +23,9 @@ public class WorkflowConstant {
     public static final String SAME_VILLAGE_VARIABLE = "isSameVillage";
     public static final String MUSLIM_VARIABLE = "isMuslim";
     public static final String SET_WORKPLACE_TYPE_VARIABLE = "setWorkplaceType";
+
+    public static final String COURT_CITY_CODE_VARIABLE = "courtCity";
+    public static final String CASE_TYPE_VARIABLE = "caseType";
+    public static final String SET_DATE_TYPE_VARIABLE = "setDateType";
+    public static final String RECONCILIATION_SUCCESS_VARIABLE = "isReconciliationSuccess ";
 }

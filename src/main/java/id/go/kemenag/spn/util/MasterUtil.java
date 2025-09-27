@@ -12,4 +12,11 @@ public class MasterUtil {
             .findFirst()
             .orElse(null);
     }
+
+    public static Master getReligiousCourt(List<Master> children) {
+        return children.stream()
+            .filter(c -> "PENGADILAN_AGAMA".equalsIgnoreCase(c.getGroupName()))
+            .findFirst()
+            .orElse(null);
+    }
 }

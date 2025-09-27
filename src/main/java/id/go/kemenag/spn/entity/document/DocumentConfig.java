@@ -24,7 +24,7 @@ public class DocumentConfig extends BaseEntity {
     private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "village_id")
+    @JoinColumn(name = "workplace_id")
     private Master village;
 
     @Column
