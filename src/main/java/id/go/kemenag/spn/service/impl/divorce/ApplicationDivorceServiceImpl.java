@@ -7,12 +7,18 @@ import id.go.kemenag.spn.dto.application.response.ApplicationCreateResponse;
 import id.go.kemenag.spn.entity.Application;
 import id.go.kemenag.spn.entity.divorce.*;
 import id.go.kemenag.spn.mapper.*;
+import id.go.kemenag.spn.service.ApplicationHandlerService;
 import id.go.kemenag.spn.service.ApplicationService;
 import id.go.kemenag.spn.service.CamundaService;
 import id.go.kemenag.spn.service.divorce.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -54,6 +60,15 @@ public class ApplicationDivorceServiceImpl implements ApplicationDivorceService 
     @Autowired
     private CamundaService camundaService;
 
+    @Autowired
+    private ApplicationHandlerService applicationHandlerService;
+
+    @Autowired
+    private PropertyService propertyService;
+
+    @Autowired
+    private ChildService childService;
+
     @Override
     public ApplicationCreateResponse createDivorce(ApplicationDivorceCreateRequest request) {
         var appplication = Application
@@ -68,12 +83,15 @@ public class ApplicationDivorceServiceImpl implements ApplicationDivorceService 
         var plaintiff = this.processPlaintiff(request);
         var marriageData = this.processMarriageData(request);
 
+        var caseType = this.determineCaseType(request);
+
         var isMuslim = DivorceConstant.Religion.ISLAM.equals(plaintiff.getReligion())
             || DivorceConstant.Religion.ISLAM.equals(defendant.getReligion());
 
         var divorceCase = DivorceCase
             .builder()
             .application(appplication)
+            .caseType(caseType)
             .defendant(defendant)
             .plaintiff(plaintiff)
             .marriageData(marriageData)
@@ -85,9 +103,17 @@ public class ApplicationDivorceServiceImpl implements ApplicationDivorceService 
         this.processPropertyClaim(request, divorceCase);
         this.processDivorceReason(request, divorceCase);
 
-        boolean cancelled = false;
+        boolean cancelled = this.applicationHandlerService.setInitialDivorceHandler(appplication, request);
+        if (!cancelled) {
+            LocalDate sixMonthsAgo = LocalDate.now().minusMonths(6);
+            boolean isDateConditionMet = marriageData.getMarriageDate().isAfter(sixMonthsAgo);
 
-        var processId = this.camundaService.invokeDivorceProcess(cancelled, divorceCase, isMuslim);
+            if (isDateConditionMet) {
+                cancelled = true;
+            }
+        }
+
+       var processId = this.camundaService.invokeDivorceProcess(cancelled, divorceCase, isMuslim);
 
         appplication.setProcessId(processId);
         appplication = this.applicationService.save(appplication);
@@ -96,6 +122,7 @@ public class ApplicationDivorceServiceImpl implements ApplicationDivorceService 
             .builder()
             .applicationId(appplication.getId())
             .processId(appplication.getProcessId())
+            .status(cancelled ? ApplicationConstant.Status.CANCELLED : ApplicationConstant.Status.CREATED)
             .build();
     }
 
@@ -114,9 +141,9 @@ public class ApplicationDivorceServiceImpl implements ApplicationDivorceService 
         return this.marriageDataService.save(marriageData);
     }
 
-    private ChildClaim processChildClaim(ApplicationDivorceCreateRequest request, DivorceCase divorceCase) {
+    private void processChildClaim(ApplicationDivorceCreateRequest request, DivorceCase divorceCase) {
         if (request.getChildClaim() == null) {
-            return null;
+            return;
         }
 
         var childClaim = ChildClaim
@@ -124,42 +151,68 @@ public class ApplicationDivorceServiceImpl implements ApplicationDivorceService 
             .divorceCase(divorceCase)
             .custodyRequest(request.getChildClaim().getCustodyRequest())
             .monthlySupport(request.getChildClaim().getMonthlySupport())
+            .children(new ArrayList<>())
             .build();
 
-        for (var childRequest : request.getChildClaim().getChildren()) {
-            var child = this.childMapper.convert(childRequest);
-            childClaim.getChildren().add(child);
-        }
+        List<Child> children = request.getChildClaim().getChildren().stream()
+            .map(childRequest -> this.childMapper.convert(childRequest))
+            .map(child -> this.childService.save(child))
+            .collect(Collectors.toList());
 
-        return childClaim;
+        childClaim.setChildren(children);
+
+        this.childService.save(childClaim);
     }
 
-    private PropertyClaim processPropertyClaim(ApplicationDivorceCreateRequest request, DivorceCase divorceCase) {
+    private void processPropertyClaim(ApplicationDivorceCreateRequest request, DivorceCase divorceCase) {
         if (request.getPropertyClaim() == null) {
-            return null;
+            return;
         }
 
         var propertyClaim = PropertyClaim
             .builder()
             .divorceCase(divorceCase)
             .divisionRequest(request.getPropertyClaim().getDivisionRequest())
+            .properties(new ArrayList<>()) // <-- PENTING: Inisialisasi list
             .build();
+
+        propertyClaim = this.propertyService.save(propertyClaim);
 
         for (var propertyRequest : request.getPropertyClaim().getProperties()) {
             var property = this.propertyMapper.convert(propertyRequest);
-            propertyClaim.getProperties().add(property);
+            property.setPropertyClaim(propertyClaim);
+            this.propertyService.save(property);
         }
-
-        return propertyClaim;
     }
 
-    private DivorceReason processDivorceReason(ApplicationDivorceCreateRequest request, DivorceCase divorceCase) {
+    private void processDivorceReason(ApplicationDivorceCreateRequest request, DivorceCase divorceCase) {
         if (request.getDivorceReason() == null) {
-            return null;
+            return;
         }
 
         var divorceReason = this.divorceMapper.convert(request.getDivorceReason());
         divorceReason.setDivorceCase(divorceCase);
-        return divorceReason;
+
+        this.divorceService.save(divorceReason);
+    }
+
+    private DivorceConstant.CaseType determineCaseType(ApplicationDivorceCreateRequest request) {
+        boolean hasPropertyClaim = request.getPropertyClaim() != null
+            && request.getPropertyClaim().getProperties() != null
+            && !request.getPropertyClaim().getProperties().isEmpty();
+
+        boolean hasChildClaim = request.getChildClaim() != null
+            && request.getChildClaim().getChildren() != null
+            && !request.getChildClaim().getChildren().isEmpty();
+
+        if (hasPropertyClaim && hasChildClaim) {
+            return DivorceConstant.CaseType.COMPLETE;
+        } else if (hasPropertyClaim) {
+            return DivorceConstant.CaseType.PROPERTY;
+        } else if (hasChildClaim) {
+            return DivorceConstant.CaseType.CHILD_CUSTODY;
+        } else {
+            return DivorceConstant.CaseType.BASIC;
+        }
     }
 }

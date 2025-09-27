@@ -1,4 +1,4 @@
-INSERT INTO "user"
+INSERT INTO user_detail
     (first_name, last_name, username, password, workplace_code,workplace_name, role)
 VALUES
     (

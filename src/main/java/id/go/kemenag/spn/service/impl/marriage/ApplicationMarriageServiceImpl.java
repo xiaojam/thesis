@@ -502,7 +502,7 @@ public class ApplicationMarriageServiceImpl implements ApplicationMarriageServic
     }
 
     private PreviousPartner processBridePreviousPartner(ApplicationMarriageCreateRequest request) {
-        var brideStatus = request.getGroom().getMaritalStatus();
+        var brideStatus = request.getBride().getMaritalStatus();
         var previousPartnerDto = request.getPreviousBridePartner();
 
         return this.processPreviousPartner(previousPartnerDto, brideStatus);

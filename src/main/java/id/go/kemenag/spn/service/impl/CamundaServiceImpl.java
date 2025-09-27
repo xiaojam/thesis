@@ -53,6 +53,7 @@ public class CamundaServiceImpl implements CamundaService {
             WorkflowConstant.APPLICATION_STATUS_VARIABLE,
             cancelled ? ApplicationConstant.Status.CANCELLED : ApplicationConstant.Status.CREATED.name()
         );
+        variables.put(WorkflowConstant.CANCELLED_APPLICATION_VARIABLE, cancelled);
 
         if (type.equals(ApplicationConstant.Type.MARRIAGE)) {
             var bride = marriage.getBride();
@@ -95,6 +96,7 @@ public class CamundaServiceImpl implements CamundaService {
         variables.put(WorkflowConstant.MUSLIM_VARIABLE, isMuslim);
         variables.put(WorkflowConstant.COURT_CITY_CODE_VARIABLE, divorceCase.getPlaintiff().getCityCode());
         variables.put(WorkflowConstant.CASE_TYPE_VARIABLE, divorceCase.getCaseType().name());
+        variables.put(WorkflowConstant.CANCELLED_APPLICATION_VARIABLE, cancelled);
 
         ProcessInstance processInstance = this.runtimeService.startProcessInstanceByKey(
             WorkflowConstant.PROCESS_MAIN_KEY,

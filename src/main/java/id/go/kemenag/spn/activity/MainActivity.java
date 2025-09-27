@@ -25,28 +25,16 @@ public class MainActivity implements JavaDelegate {
     @Override
     public void execute(DelegateExecution delegateExecution) throws Exception {
         UUID applicationId = (UUID) delegateExecution.getVariable(WorkflowConstant.APPLICATION_ID_VARIABLE);
+        Boolean cancelled = (Boolean) delegateExecution.getVariable(WorkflowConstant.CANCELLED_APPLICATION_VARIABLE);
 
         /**
          * Currently by passed
          * Implement trigger by user to process application
          */
         var application = this.applicationService.findById(applicationId);
-        if (application != null && !application.getStatus().equals(ApplicationConstant.Status.CANCELLED)) {
+        if (application != null && !cancelled) {
             application.setStatus(ApplicationConstant.Status.PROCESSED);
             applicationService.save(application);
-
-            this.camundaService.setVariable(
-                delegateExecution.getProcessInstanceId(),
-                WorkflowConstant.CANCELLED_APPLICATION_VARIABLE,
-                Boolean.FALSE
-            );
-        } else {
-            this.camundaService.setVariable(
-                delegateExecution.getProcessInstanceId(),
-                WorkflowConstant.CANCELLED_APPLICATION_VARIABLE,
-                Boolean.TRUE
-            );
         }
-
     }
 }
