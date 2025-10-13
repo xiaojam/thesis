@@ -40,24 +40,24 @@ public class SetHandlerActivity implements JavaDelegate {
     private MasterService masterService;
 
     @Override
-    public void execute(DelegateExecution execution) {
-        UUID applicationId = (UUID) execution.getVariable(WorkflowConstant.APPLICATION_ID_VARIABLE);
+    public void execute(DelegateExecution delegateExecution) {
+        UUID applicationId = (UUID) delegateExecution.getVariable(WorkflowConstant.APPLICATION_ID_VARIABLE);
         log.info("Starting SetHandlerActivity for Application ID: {}", applicationId);
 
         var marriage = this.marriageService.findByApplicationId(applicationId);
 
         if (marriage != null) {
-            this.processNewHandler(execution, marriage);
+            this.processNewHandler(delegateExecution, marriage);
         } else {
             log.error("Marriage data not found for Application ID: {}", applicationId);
         }
     }
 
-    private void processNewHandler(DelegateExecution execution, Marriage marriage) {
-        AuthConstant.Role newRole = getRequiredRole(execution);
+    private void processNewHandler(DelegateExecution delegateExecution, Marriage marriage) {
+        AuthConstant.Role newRole = getRequiredRole(delegateExecution);
         log.info("New handler role to be set: {}", newRole);
 
-        String workplaceCode = determineWorkplaceCode(execution, marriage.getLocationType());
+        String workplaceCode = determineWorkplaceCode(delegateExecution, marriage.getLocationType());
         log.info("Determined new workplace code: {}", workplaceCode);
 
         var user = this.userService.findByWorkplaceCodeAndRole(workplaceCode, newRole);
@@ -74,9 +74,9 @@ public class SetHandlerActivity implements JavaDelegate {
         log.info("Successfully saved new handler -> Username: {}, Role: {}", savedHandler.getUsername(), savedHandler.getRole());
     }
 
-    private String determineWorkplaceCode(DelegateExecution execution, MarriageConstant.LocationType locationType) {
-        boolean isSecondProcess = execution.getVariable(WorkflowConstant.SET_SECOND_PROCESS_VARIABLE) != null;
-        ApplicationConstant.WorkplaceType workplaceType = getWorkplaceType(execution);
+    private String determineWorkplaceCode(DelegateExecution delegateExecution, MarriageConstant.LocationType locationType) {
+        boolean isSecondProcess = delegateExecution.getVariable(WorkflowConstant.SET_SECOND_PROCESS_VARIABLE) != null;
+        ApplicationConstant.WorkplaceType workplaceType = getWorkplaceType(delegateExecution);
 
         boolean isBrideLocationPrimary = List.of(
             MarriageConstant.LocationType.BRIDE_HOME,
@@ -84,10 +84,10 @@ public class SetHandlerActivity implements JavaDelegate {
         ).contains(locationType);
         log.info("Is bride's location the primary ceremony location? {}", isBrideLocationPrimary);
 
-        String brideDistrictCode = (String) execution.getVariable(WorkflowConstant.BRIDE_DISTRICT_CODE_VARIABLE);
-        String brideSubDistrictCode = (String) execution.getVariable(WorkflowConstant.BRIDE_SUB_DISTRICT_CODE_VARIABLE);
-        String groomDistrictCode = (String) execution.getVariable(WorkflowConstant.GROOM_DISTRICT_CODE_VARIABLE);
-        String groomSubDistrictCode = (String) execution.getVariable(WorkflowConstant.GROOM_SUB_DISTRICT_CODE_VARIABLE);
+        String brideDistrictCode = (String) delegateExecution.getVariable(WorkflowConstant.BRIDE_DISTRICT_CODE_VARIABLE);
+        String brideSubDistrictCode = (String) delegateExecution.getVariable(WorkflowConstant.BRIDE_SUB_DISTRICT_CODE_VARIABLE);
+        String groomDistrictCode = (String) delegateExecution.getVariable(WorkflowConstant.GROOM_DISTRICT_CODE_VARIABLE);
+        String groomSubDistrictCode = (String) delegateExecution.getVariable(WorkflowConstant.GROOM_SUB_DISTRICT_CODE_VARIABLE);
 
         String primaryLocationCode;
         String secondaryLocationCode;
@@ -103,7 +103,7 @@ public class SetHandlerActivity implements JavaDelegate {
         }
 
         if (isSecondProcess) {
-            execution.setVariable(WorkflowConstant.SET_SECOND_PROCESS_VARIABLE, true);
+            delegateExecution.setVariable(WorkflowConstant.SET_SECOND_PROCESS_VARIABLE, true);
             return primaryLocationCode;
         } else {
             return secondaryLocationCode;
@@ -116,16 +116,16 @@ public class SetHandlerActivity implements JavaDelegate {
         return kua.getCode();
     }
 
-    private AuthConstant.Role getRequiredRole(DelegateExecution execution) {
-        String roleName = (String) execution.getVariable(WorkflowConstant.SET_HANDLER_ROLE_VARIABLE);
+    private AuthConstant.Role getRequiredRole(DelegateExecution delegateExecution) {
+        String roleName = (String) delegateExecution.getVariable(WorkflowConstant.SET_HANDLER_ROLE_VARIABLE);
         return AuthConstant.Role.fromString(roleName)
             .orElseThrow(() ->
                 new BusinessErrorException(HttpStatus.NOT_FOUND, "Role not found in process variable: " + roleName)
             );
     }
 
-    private ApplicationConstant.WorkplaceType getWorkplaceType(DelegateExecution execution) {
-        String typeName = (String) execution.getVariable(WorkflowConstant.SET_WORKPLACE_TYPE_VARIABLE);
+    private ApplicationConstant.WorkplaceType getWorkplaceType(DelegateExecution delegateExecution) {
+        String typeName = (String) delegateExecution.getVariable(WorkflowConstant.SET_WORKPLACE_TYPE_VARIABLE);
         return ApplicationConstant.WorkplaceType.fromString(typeName)
             .orElseThrow(() ->
                 new BusinessErrorException(HttpStatus.NOT_FOUND, "Workplace type not found in process variable: " + typeName)

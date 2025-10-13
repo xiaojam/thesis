@@ -1,23 +1,35 @@
 package id.go.kemenag.spn.service.impl.divorce;
 
-import id.go.kemenag.spn.constant.ApplicationConstant;
-import id.go.kemenag.spn.constant.DivorceConstant;
+import id.go.kemenag.spn.constant.*;
 import id.go.kemenag.spn.dto.application.request.ApplicationDivorceCreateRequest;
+import id.go.kemenag.spn.dto.application.request.ApplicationDivorceDoneRequest;
 import id.go.kemenag.spn.dto.application.response.ApplicationCreateResponse;
+import id.go.kemenag.spn.dto.application.response.ApplicationDivorceDoneResponse;
+import id.go.kemenag.spn.dto.application.response.ApplicationDivorceResponse;
+import id.go.kemenag.spn.dto.camunda.request.CamundaCompleteUserTaskRequest;
+import id.go.kemenag.spn.dto.caseschedule.response.CaseScheduleResponse;
+import id.go.kemenag.spn.dto.child.response.ChildClaimResponse;
+import id.go.kemenag.spn.dto.property.response.PropertyClaimResponse;
 import id.go.kemenag.spn.entity.Application;
 import id.go.kemenag.spn.entity.divorce.*;
+import id.go.kemenag.spn.exception.BusinessErrorException;
 import id.go.kemenag.spn.mapper.*;
 import id.go.kemenag.spn.service.ApplicationHandlerService;
 import id.go.kemenag.spn.service.ApplicationService;
+import id.go.kemenag.spn.service.AuthService;
 import id.go.kemenag.spn.service.CamundaService;
 import id.go.kemenag.spn.service.divorce.*;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.List;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service
@@ -69,6 +81,18 @@ public class ApplicationDivorceServiceImpl implements ApplicationDivorceService 
     @Autowired
     private ChildService childService;
 
+    @Autowired
+    private AuthService authService;
+
+    @Autowired
+    private CourtService courtService;
+
+    @Autowired
+    private CaseScheduleMapper caseScheduleMapper;
+
+    @Autowired
+    private CaseScheduleService caseScheduleService;
+
     @Override
     public ApplicationCreateResponse createDivorce(ApplicationDivorceCreateRequest request) {
         var appplication = Application
@@ -88,10 +112,20 @@ public class ApplicationDivorceServiceImpl implements ApplicationDivorceService 
         var isMuslim = DivorceConstant.Religion.ISLAM.equals(plaintiff.getReligion())
             || DivorceConstant.Religion.ISLAM.equals(defendant.getReligion());
 
+        var court = this.courtService.findCourtByCityCode(plaintiff.getCityCode());
+
+        boolean cancelled = court == null;
+        var caseNumber = this.buildCaseNumber(plaintiff.getCityCode());
+        var courtCode = court != null ? court.getCode() : null;
+        var courtName = court != null ? court.getName() : null;
+
         var divorceCase = DivorceCase
             .builder()
             .application(appplication)
             .caseType(caseType)
+            .caseNumber(caseNumber)
+            .courtCode(courtCode)
+            .courtName(courtName)
             .defendant(defendant)
             .plaintiff(plaintiff)
             .marriageData(marriageData)
@@ -103,7 +137,10 @@ public class ApplicationDivorceServiceImpl implements ApplicationDivorceService 
         this.processPropertyClaim(request, divorceCase);
         this.processDivorceReason(request, divorceCase);
 
-        boolean cancelled = this.applicationHandlerService.setInitialDivorceHandler(appplication, request);
+        if (!cancelled) {
+            cancelled = this.applicationHandlerService.setInitialDivorceHandler(appplication, request);
+        }
+
         if (!cancelled) {
             LocalDate sixMonthsAgo = LocalDate.now().minusMonths(6);
             boolean isDateConditionMet = marriageData.getMarriageDate().isAfter(sixMonthsAgo);
@@ -116,6 +153,7 @@ public class ApplicationDivorceServiceImpl implements ApplicationDivorceService 
        var processId = this.camundaService.invokeDivorceProcess(cancelled, divorceCase, isMuslim);
 
         appplication.setProcessId(processId);
+        appplication.setApplicationNumber(caseNumber);
         appplication = this.applicationService.save(appplication);
 
         return ApplicationCreateResponse
@@ -123,7 +161,176 @@ public class ApplicationDivorceServiceImpl implements ApplicationDivorceService 
             .applicationId(appplication.getId())
             .processId(appplication.getProcessId())
             .status(cancelled ? ApplicationConstant.Status.CANCELLED : ApplicationConstant.Status.CREATED)
+            .applicationNumber(appplication.getApplicationNumber())
             .build();
+    }
+
+    private String buildCaseNumber(String cityCode) {
+        var datePart = LocalDateTime.now().format(DateTimeFormatter.ofPattern(FormatterConstant.TIME_FORMAT_15));
+        var cityPart = cityCode.replaceAll("[^a-zA-Z0-9]", "");
+        return String.format("%s%s", cityPart, datePart);
+    }
+
+    @Override
+    public List<ApplicationDivorceResponse> findAllApplicationBasedOnHandler() {
+        var user = this.authService.getCurrentUser();
+        if (user == null) {
+            throw new BusinessErrorException(HttpStatus.FORBIDDEN, "You are not authorized to access application");
+        }
+
+        var applications = this.applicationService
+            .findAllABasedOnHandler(
+                List.of(ApplicationConstant.Status.PROCESSED),
+                ApplicationConstant.Type.DIVORCE,
+                user.getRole(),
+                user.getWorkplaceCode()
+            );
+
+        if (applications.isEmpty()) {
+            return List.of();
+        }
+
+        var applicationIds = this.applicationService.collectIds(applications);
+        var divorceCases = this.divorceService.findAllByApplicationIds(applicationIds);
+
+        if (divorceCases.isEmpty()) {
+            return List.of();
+        }
+
+        var divorceCaseMap = divorceCases.stream()
+            .collect(Collectors.toMap(
+                divorceCase -> divorceCase.getApplication().getId(),
+                Function.identity()
+            ));
+
+        return applications.stream()
+            .map(app -> {
+                var divorceCase = divorceCaseMap.get(app.getId());
+
+                if (divorceCase == null) {
+                    return null;
+                }
+
+                return buildApplicationDivorceResponse(app, divorceCase);
+            })
+            .filter(Objects::nonNull)
+            .collect(Collectors.toList());
+    }
+
+    @Override
+    public ApplicationDivorceResponse findApplicationByIdBasedOnHandler(UUID applicationId) {
+        var user = this.authService.getCurrentUser();
+        if (user == null) {
+            throw new BusinessErrorException(HttpStatus.FORBIDDEN, "You are not authorized to access application");
+        }
+
+        var application = this.applicationService.findByIdBasedOnHandler(
+            applicationId,
+            user.getRole(),
+            user.getWorkplaceCode()
+        );
+
+        if (application == null) {
+            throw new BusinessErrorException(HttpStatus.NOT_FOUND, "Application not found");
+        }
+
+        var divorceCases = this.divorceService.findByApplicationId(applicationId);
+        if (divorceCases == null) {
+            throw new BusinessErrorException(HttpStatus.NOT_FOUND, "Divorce case not found");
+        }
+
+        return buildApplicationDivorceResponse(application, divorceCases);
+    }
+
+    @Override
+    public ApplicationDivorceDoneResponse doneApplication(ApplicationDivorceDoneRequest request) {
+        DivorceCase divorceCase = this.divorceService.findByApplicationId(request.getApplicationId());
+        if (divorceCase == null) {
+            throw new BusinessErrorException(HttpStatus.NOT_FOUND, "Divorce case not found");
+        }
+
+        var handler = this.applicationHandlerService.validateHandler(request.getApplicationId());
+
+        CaseSchedule scheduleToComplete = this.caseScheduleService.findTopScheduledCase(
+            request.getApplicationId(),
+            request.getDateType(),
+            DivorceConstant.ScheduleStatus.SCHEDULED
+        );
+        
+        if (scheduleToComplete == null) {
+            throw new BusinessErrorException(HttpStatus.NOT_FOUND, "No scheduled task found for the specified date type.");
+        }
+
+        Map<String, Object> resultMap = new HashMap<>();
+        List<String> taskNames = new ArrayList<>(
+            List.of(
+                ActivityIdConstant.ACTIVITY_SET_COUNCIL_RESULT,
+                ActivityIdConstant.ACTIVITY_SET_RECONCILIATION_RESULT,
+                ActivityIdConstant.ACTIVITY_DONE_DEFENDANT_S_RESPONSE,
+                ActivityIdConstant.ACTIVITY_DONE_PLAINTIFF_S_REPLY,
+                ActivityIdConstant.ACTIVITY_DONE_DEFENDANT_S_REJOINDER,
+                ActivityIdConstant.ACTIVITY_DONE_PLAINTIFF_S_EVIDENCE,
+                ActivityIdConstant.ACTIVITY_DONE_DEFENDANT_S_EVIDENCE,
+                ActivityIdConstant.ACTIVITY_DONE_FULL_CLOSING_STATEMENTS,
+                ActivityIdConstant.ACTIVITY_DONE_FULL_VERDICT,
+                ActivityIdConstant.ACTIVITY_DONE_PLAINTIFF_S_CASE_AND_EVIDENCE,
+                ActivityIdConstant.ACTIVITY_DONE_HALF_CLOSING_STATEMENTS,
+                ActivityIdConstant.ACTIVITY_DONE_HALF_VERDICT
+            )
+        );
+
+        switch (request.getDateType()) {
+            case COUNCIL_DATE:
+                long previousCouncilCount = divorceCase.getSchedules()
+                    .stream()
+                    .filter(s -> s.getDateType() == DivorceConstant.SetDateType.COUNCIL_DATE)
+                    .count();
+
+                DivorceConstant.CouncilResult councilResult = this.getCouncilResult(request, previousCouncilCount);
+                resultMap.put(WorkflowConstant.COUNCIL_RESULT_VARIABLE, councilResult.name());
+                break;
+
+            case RECONCILIATION_DATE:
+                if (request.getIsReconciliationSuccess() == null) {
+                    throw new BusinessErrorException(HttpStatus.BAD_REQUEST, "is_reconciliation_success is required for this task.");
+                }
+                resultMap.put(WorkflowConstant.RECONCILIATION_SUCCESS_VARIABLE, request.getIsReconciliationSuccess());
+                break;
+
+            default:
+                resultMap.put(WorkflowConstant.COUNCIL_DROPPED_VARIABLE, !request.getIsPlaintiffPresent());
+                break;
+        }
+
+        camundaService.completeUserTask(
+            CamundaCompleteUserTaskRequest
+                .builder()
+                .processInstanceId(String.valueOf(divorceCase.getApplication().getProcessId()))
+                .taskNames(taskNames)
+                .resultMap(resultMap)
+                .build(),
+            handler
+        );
+
+        scheduleToComplete.setStatus(DivorceConstant.ScheduleStatus.COMPLETED);
+        caseScheduleService.save(scheduleToComplete);
+
+        return ApplicationDivorceDoneResponse
+            .builder()
+            .applicationId(request.getApplicationId())
+            .build();
+    }
+
+    private DivorceConstant.@NotNull CouncilResult getCouncilResult(ApplicationDivorceDoneRequest request, long previousCouncilCount) {
+        DivorceConstant.CouncilResult councilResult;
+        if (Boolean.TRUE.equals(request.getIsPlaintiffPresent()) && Boolean.TRUE.equals(request.getIsDefendantPresent())) {
+            councilResult = DivorceConstant.CouncilResult.FULL;
+        } else if (Boolean.TRUE.equals(request.getIsPlaintiffPresent()) || Boolean.TRUE.equals(request.getIsDefendantPresent())) {
+            councilResult = DivorceConstant.CouncilResult.HALF;
+        } else {
+            councilResult = (previousCouncilCount >= 3) ? DivorceConstant.CouncilResult.DROP : DivorceConstant.CouncilResult.FAIL;
+        }
+        return councilResult;
     }
 
     private Defendant processDefendant(ApplicationDivorceCreateRequest request) {
@@ -173,7 +380,7 @@ public class ApplicationDivorceServiceImpl implements ApplicationDivorceService 
             .builder()
             .divorceCase(divorceCase)
             .divisionRequest(request.getPropertyClaim().getDivisionRequest())
-            .properties(new ArrayList<>()) // <-- PENTING: Inisialisasi list
+            .properties(new ArrayList<>())
             .build();
 
         propertyClaim = this.propertyService.save(propertyClaim);
@@ -214,5 +421,62 @@ public class ApplicationDivorceServiceImpl implements ApplicationDivorceService 
         } else {
             return DivorceConstant.CaseType.BASIC;
         }
+    }
+
+    private ApplicationDivorceResponse buildApplicationDivorceResponse(Application application, DivorceCase divorceCase) {
+        var plaintiff = this.plaintiffMapper.convert(divorceCase.getPlaintiff());
+        var defendant = this.defendantMapper.convert(divorceCase.getDefendant());
+        var marriageData = this.marriageDataMapper.convert(divorceCase.getMarriageData());
+        var divorceReason = divorceCase.getDivorceReason() != null
+            ? this.divorceMapper.convert(divorceCase.getDivorceReason())
+            : null;
+
+        var childClaim = divorceCase.getChildClaim() != null
+            ? ChildClaimResponse
+                .builder()
+                .custodyRequest(divorceCase.getChildClaim().getCustodyRequest())
+                .monthlySupport(divorceCase.getChildClaim().getMonthlySupport())
+                .children(
+                    divorceCase.getChildClaim().getChildren().stream()
+                        .map(child -> this.childMapper.convert(child))
+                        .collect(Collectors.toList())
+                )
+                .build()
+            : null;
+
+        var propertyClaim = divorceCase.getPropertyClaim() != null
+            ? PropertyClaimResponse
+                .builder()
+                .divisionRequest(divorceCase.getPropertyClaim().getDivisionRequest())
+                .properties(
+                    divorceCase.getPropertyClaim().getProperties().stream()
+                        .map(property -> this.propertyMapper.convert(property))
+                        .collect(Collectors.toList())
+                )
+                .build()
+            : null;
+
+        var schedules = divorceCase.getSchedules()
+            .stream()
+            .map(this.caseScheduleMapper::convert)
+            .sorted(Comparator.comparing(CaseScheduleResponse::getProcessStep))
+            .toList();
+
+        return ApplicationDivorceResponse
+            .builder()
+            .applicationId(application.getId())
+            .processId(application.getProcessId())
+            .status(application.getStatus())
+            .caseNumber(divorceCase.getCaseNumber())
+            .courtCode(divorceCase.getCourtCode())
+            .courtName(divorceCase.getCourtName())
+            .plaintiff(plaintiff)
+            .defendant(defendant)
+            .marriageData(marriageData)
+            .divorceReason(divorceReason)
+            .childClaim(childClaim)
+            .propertyClaim(propertyClaim)
+            .schedules(schedules)
+            .build();
     }
 }

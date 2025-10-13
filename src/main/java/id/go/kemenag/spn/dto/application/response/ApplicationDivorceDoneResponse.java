@@ -13,17 +13,8 @@ import java.util.UUID;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class ApplicationCreateResponse {
+public class ApplicationDivorceDoneResponse {
 
     @JsonProperty("application_id")
     private UUID applicationId;
-
-    @JsonProperty("process_id")
-    private UUID processId;
-
-    @JsonProperty("status")
-    private ApplicationConstant.Status status;
-
-    @JsonProperty("application_number")
-    private String applicationNumber;
 }

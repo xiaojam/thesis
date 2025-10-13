@@ -1,5 +1,5 @@
 CREATE TABLE child (
-    id TEXT PRIMARY KEY,
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name TEXT NOT NULL,
     gender TEXT,
     age INTEGER,

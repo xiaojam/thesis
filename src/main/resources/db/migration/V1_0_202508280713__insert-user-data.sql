@@ -5,7 +5,7 @@ VALUES
         'Teddy',
         'Kiswanto',
         'teddy',
-        '$2a$10$ZknzEYLowzrl.b6vaFH.9e/0xqjk1OmkGPbZynFHtVQZKINHYn14G',
+        '$2a$10$YNRRl20P/xVriVh8lYDo.O98ioQzRFwdTlhiBI8Z8gOzJQ1SzTUKa',
         '35.25.15.2013',
         'Desa Cangkir',
         'REGISTRAR'
@@ -14,7 +14,7 @@ VALUES
         'Alisha',
         'Tanoko',
         'alisha',
-        '$2a$10$ZknzEYLowzrl.b6vaFH.9e/0xqjk1OmkGPbZynFHtVQZKINHYn14G',
+        '$2a$10$YNRRl20P/xVriVh8lYDo.O98ioQzRFwdTlhiBI8Z8gOzJQ1SzTUKa',
         '35.25.15.2013',
         'Desa Cangkir',
         'HEADMAN'
@@ -23,7 +23,7 @@ VALUES
         'Machrush',
         'Aliy',
         'machrush',
-        '$2a$10$ZknzEYLowzrl.b6vaFH.9e/0xqjk1OmkGPbZynFHtVQZKINHYn14G',
+        '$2a$10$YNRRl20P/xVriVh8lYDo.O98ioQzRFwdTlhiBI8Z8gOzJQ1SzTUKa',
         '35.25.15.2010',
         'Desa Tenaru',
         'REGISTRAR'
@@ -32,7 +32,7 @@ VALUES
         'Shiro',
         'Maulana',
         'shiro',
-        '$2a$10$ZknzEYLowzrl.b6vaFH.9e/0xqjk1OmkGPbZynFHtVQZKINHYn14G',
+        '$2a$10$YNRRl20P/xVriVh8lYDo.O98ioQzRFwdTlhiBI8Z8gOzJQ1SzTUKa',
         '35.25.15.2010',
         'Desa Tenaru',
         'HEADMAN'
@@ -41,7 +41,7 @@ VALUES
         'Dharma Putra',
         'Pambudi',
         'dharma',
-        '$2a$10$ZknzEYLowzrl.b6vaFH.9e/0xqjk1OmkGPbZynFHtVQZKINHYn14G',
+        '$2a$10$YNRRl20P/xVriVh8lYDo.O98ioQzRFwdTlhiBI8Z8gOzJQ1SzTUKa',
         '3525151',
         'KUA Kecamatan Driyorejo',
         'OFFICER'
@@ -50,7 +50,7 @@ VALUES
         'Gunadi Jaya',
         'Santoso',
         'gunadi',
-        '$2a$10$ZknzEYLowzrl.b6vaFH.9e/0xqjk1OmkGPbZynFHtVQZKINHYn14G',
+        '$2a$10$YNRRl20P/xVriVh8lYDo.O98ioQzRFwdTlhiBI8Z8gOzJQ1SzTUKa',
         '3525151',
         'KUA Kecamatan Driyorejo',
         'APPROVER'
@@ -59,7 +59,7 @@ VALUES
         'Tanujaya',
         'Supraja',
         'tanujaya',
-        '$2a$10$ZknzEYLowzrl.b6vaFH.9e/0xqjk1OmkGPbZynFHtVQZKINHYn14G',
+        '$2a$10$YNRRl20P/xVriVh8lYDo.O98ioQzRFwdTlhiBI8Z8gOzJQ1SzTUKa',
         '35.07.09.2014',
         'Desa Sananrejo',
         'REGISTRAR'
@@ -68,7 +68,7 @@ VALUES
         'Ricky',
         'Wirawan',
         'ricky',
-        '$2a$10$ZknzEYLowzrl.b6vaFH.9e/0xqjk1OmkGPbZynFHtVQZKINHYn14G',
+        '$2a$10$YNRRl20P/xVriVh8lYDo.O98ioQzRFwdTlhiBI8Z8gOzJQ1SzTUKa',
         '35.07.09.2014',
         'Desa Sananrejo',
         'HEADMAN'
@@ -77,7 +77,7 @@ VALUES
         'Erdiyan',
         'Arifin',
         'erdiyan',
-        '$2a$10$ZknzEYLowzrl.b6vaFH.9e/0xqjk1OmkGPbZynFHtVQZKINHYn14G',
+        '$2a$10$YNRRl20P/xVriVh8lYDo.O98ioQzRFwdTlhiBI8Z8gOzJQ1SzTUKa',
         '3507091',
         'KUA Kecamatan Turen',
         'OFFICER'
@@ -86,7 +86,7 @@ VALUES
         'Nashirul',
         'Umam',
         'nashirul',
-        '$2a$10$ZknzEYLowzrl.b6vaFH.9e/0xqjk1OmkGPbZynFHtVQZKINHYn14G',
+        '$2a$10$YNRRl20P/xVriVh8lYDo.O98ioQzRFwdTlhiBI8Z8gOzJQ1SzTUKa',
         '3507091',
         'KUA Kecamatan Turen',
         'APPROVER'
@@ -95,7 +95,7 @@ VALUES
         'User',
         null,
         'user1',
-        '$2a$10$ZknzEYLowzrl.b6vaFH.9e/0xqjk1OmkGPbZynFHtVQZKINHYn14G',
+        '$2a$10$YNRRl20P/xVriVh8lYDo.O98ioQzRFwdTlhiBI8Z8gOzJQ1SzTUKa',
         null,
         null,
         'USER'
@@ -104,7 +104,7 @@ VALUES
         'Super',
         'User',
         'superuser1',
-        '$2a$10$ZknzEYLowzrl.b6vaFH.9e/0xqjk1OmkGPbZynFHtVQZKINHYn14G',
+        '$2a$10$YNRRl20P/xVriVh8lYDo.O98ioQzRFwdTlhiBI8Z8gOzJQ1SzTUKa',
         null,
         null,
         'SUPER_USER'

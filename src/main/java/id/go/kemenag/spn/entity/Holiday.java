@@ -1,4 +1,5 @@
-package id.go.kemenag.spn.entity.divorce;
+package id.go.kemenag.spn.entity;
+
 
 import id.go.kemenag.spn.entity.base.BaseEntity;
 import jakarta.persistence.*;
@@ -7,29 +8,23 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.UUID;
+import java.time.LocalDate;
 
 @Data
 @Entity
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class Child extends BaseEntity {
+public class Holiday extends BaseEntity {
 
     @Id
     @Column
     @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID id;
-
-    @Column(nullable = false)
-    private String name;
-
-    @Column(name = "gender")
-    private String gender;
+    private String id;
 
     @Column
-    private Integer age;
+    private LocalDate holidayDate;
 
     @Column
-    private Boolean inCustodyOfPlaintiff;
+    private String description;
 }

@@ -19,5 +19,5 @@ public class PropertyClaimResponse {
     private String divisionRequest;
 
     @JsonProperty("properties")
-    private List<SharedPropertyCreateRequest> properties;
+    private List<SharedPropertyResponse> properties;
 }

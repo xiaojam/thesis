@@ -8,6 +8,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.util.List;
+import java.util.UUID;
 
 @Data
 @Entity
@@ -19,7 +20,7 @@ public class PropertyClaim extends BaseEntity {
     @Id
     @Column
     @GeneratedValue(strategy = GenerationType.UUID)
-    private String id;
+    private UUID id;
 
     @OneToOne
     @JoinColumn(name = "divorce_case_id")

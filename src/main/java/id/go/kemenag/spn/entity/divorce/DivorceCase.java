@@ -4,14 +4,14 @@ import id.go.kemenag.spn.constant.DivorceConstant;
 import id.go.kemenag.spn.entity.Application;
 import id.go.kemenag.spn.entity.base.BaseEntity;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.hibernate.annotations.UuidGenerator;
 
+import java.util.HashSet;
+import java.util.Set;
 import java.util.UUID;
 
+@EqualsAndHashCode(callSuper = true)
 @Data
 @Entity
 @Builder
@@ -31,6 +31,15 @@ public class DivorceCase extends BaseEntity {
     @Column
     @Enumerated(EnumType.STRING)
     private DivorceConstant.CaseType caseType;
+
+    @Column
+    private String caseNumber;
+
+    @Column
+    private String courtCode;
+
+    @Column
+    private String courtName;
 
     @ManyToOne
     @JoinColumn(name = "plaintiff_id")
@@ -52,4 +61,15 @@ public class DivorceCase extends BaseEntity {
 
     @OneToOne(mappedBy = "divorceCase", cascade = CascadeType.ALL)
     private ChildClaim childClaim;
+
+    @OneToMany(
+        mappedBy = "divorceCase",
+        cascade = CascadeType.ALL,
+        orphanRemoval = true,
+        fetch = FetchType.LAZY
+    )
+    @Builder.Default
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+    private Set<CaseSchedule> schedules = new HashSet<>();
 }

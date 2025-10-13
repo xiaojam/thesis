@@ -1,5 +1,5 @@
 CREATE TABLE property_claim (
-    id TEXT PRIMARY KEY,
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     divorce_case_id UUID UNIQUE,
     division_request TEXT,
 

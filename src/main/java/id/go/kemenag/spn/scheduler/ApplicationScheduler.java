@@ -15,4 +15,9 @@ public class ApplicationScheduler {
     public void processExpiredApplications() {
         this.applicationService.dropExpiredApplications();
     }
+
+    @Scheduled(cron = "@daily")
+    public void rescheduleLateProcess() {
+        this.applicationService.dropExpiredApplications();
+    }
 }
