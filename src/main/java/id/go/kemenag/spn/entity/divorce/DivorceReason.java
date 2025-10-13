@@ -7,6 +7,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.UUID;
+
 @Data
 @Entity
 @Builder
@@ -17,7 +19,7 @@ public class DivorceReason extends BaseEntity {
     @Id
     @Column
     @GeneratedValue(strategy = GenerationType.UUID)
-    private String id;
+    private UUID id;
 
     @OneToOne
     @JoinColumn(name = "divorce_case_id")

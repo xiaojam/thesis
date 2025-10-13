@@ -23,11 +23,11 @@ import java.util.UUID;
 @Tag(name = "Marriage", description = "Marriage API")
 public class MarriageController {
 
-    final ApplicationMarriageService applicationService;
+    final ApplicationMarriageService applicationMarriageService;
 
     @Autowired
-    public MarriageController(ApplicationMarriageService applicationService) {
-        this.applicationService = applicationService;
+    public MarriageController(ApplicationMarriageService applicationMarriageService) {
+        this.applicationMarriageService = applicationMarriageService;
     }
 
     @GetMapping("/application")
@@ -35,7 +35,7 @@ public class MarriageController {
     @PreAuthorize(AuthConstant.ROLE_MARRIAGE_PROCESSOR)
     @Operation(summary = "get all", description = "get all application")
     List<ApplicationMarriageResponse> findAllApplication() {
-        return applicationService.findAllApplicationBasedOnHandler();
+        return applicationMarriageService.findAllApplicationBasedOnHandler();
     }
 
     @GetMapping("/{applicationId}/application")
@@ -43,7 +43,7 @@ public class MarriageController {
     @PreAuthorize(AuthConstant.ROLE_MARRIAGE_PROCESSOR)
     @Operation(summary = "get", description = "get application by Id")
     ApplicationMarriageResponse findApplicationById(@PathVariable UUID applicationId) {
-        return this.applicationService.findApplicationByIdBasedOnHandler(applicationId);
+        return this.applicationMarriageService.findApplicationByIdBasedOnHandler(applicationId);
     }
 
     @PutMapping("/{applicationId}/application")
@@ -54,7 +54,7 @@ public class MarriageController {
         @PathVariable UUID applicationId,
         @RequestBody @Valid ApplicationMarriageUpdateRequest request
     ) {
-        return this.applicationService.updateApplicationById(applicationId, request);
+        return this.applicationMarriageService.updateApplicationById(applicationId, request);
     }
 
     @PutMapping("/application/approve")
@@ -62,6 +62,6 @@ public class MarriageController {
     @PreAuthorize(AuthConstant.ROLE_MARRIAGE_PROCESSOR)
     @Operation(summary = "update", description = "approve application")
     ApplicationMarriageApproveResponse approveApplication(@RequestBody @Valid ApplicationMarriageApproveRequest request) {
-        return this.applicationService.approveApplication(request);
+        return this.applicationMarriageService.approveApplication(request);
     }
 }

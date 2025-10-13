@@ -36,6 +36,9 @@ public class Application extends BaseEntity {
     @Enumerated(EnumType.STRING)
     private ApplicationConstant.Type type;
 
+    @Column
+    private String applicationNumber;
+
     @OneToMany(mappedBy = "application", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<ApplicationHandler> applicationHandler = new ArrayList<>();
 }

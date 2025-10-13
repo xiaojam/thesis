@@ -18,6 +18,7 @@ public class CancelledActivity implements JavaDelegate {
 
     @Autowired
     private ApplicationService applicationService;
+
     @Override
     public void execute(DelegateExecution delegateExecution) throws Exception {
         UUID applicationId = (UUID) delegateExecution.getVariable(WorkflowConstant.APPLICATION_ID_VARIABLE);

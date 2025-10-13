@@ -1,5 +1,5 @@
 CREATE TABLE divorce_reason (
-    id TEXT PRIMARY KEY,
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     divorce_case_id UUID UNIQUE,
     initial_situation TEXT,
     conflict_reason TEXT,

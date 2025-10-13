@@ -5,7 +5,7 @@ VALUES
         'Admin PA',
         'Kab. Gresik',
         'adminpagresikkab',
-        '$2a$10$ZknzEYLowzrl.b6vaFH.9e/0xqjk1OmkGPbZynFHtVQZKINHYn14G',
+        '$2a$10$YNRRl20P/xVriVh8lYDo.O98ioQzRFwdTlhiBI8Z8gOzJQ1SzTUKa',
         '401294',
         'Pengadilan Agama Kab. Gresik',
         'ADMINISTRATOR'
@@ -14,7 +14,7 @@ VALUES
         'Admin PA',
         'Kab. Malang',
         'adminpamalangkab',
-        '$2a$10$ZknzEYLowzrl.b6vaFH.9e/0xqjk1OmkGPbZynFHtVQZKINHYn14G',
+        '$2a$10$YNRRl20P/xVriVh8lYDo.O98ioQzRFwdTlhiBI8Z8gOzJQ1SzTUKa',
         '401427',
         'Pengadilan Agama Kab. Malang',
         'ADMINISTRATOR'

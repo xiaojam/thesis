@@ -6,6 +6,8 @@ import id.go.kemenag.spn.service.master.MasterService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.UUID;
+
 @Service
 public class MasterServiceImpl implements MasterService {
 

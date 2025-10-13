@@ -27,5 +27,7 @@ public class WorkflowConstant {
     public static final String COURT_CITY_CODE_VARIABLE = "courtCity";
     public static final String CASE_TYPE_VARIABLE = "caseType";
     public static final String SET_DATE_TYPE_VARIABLE = "setDateType";
-    public static final String RECONCILIATION_SUCCESS_VARIABLE = "isReconciliationSuccess ";
+    public static final String RECONCILIATION_SUCCESS_VARIABLE = "isReconciliationSuccess";
+    public static final String COUNCIL_DROPPED_VARIABLE = "isCouncilDropped";
+    public static final String COUNCIL_RESULT_VARIABLE = "councilResult";
 }

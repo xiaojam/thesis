@@ -1,5 +1,5 @@
 CREATE TABLE shared_property (
-    id TEXT PRIMARY KEY,
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     property_claim_id TEXT,
     property_type TEXT,
     description TEXT,

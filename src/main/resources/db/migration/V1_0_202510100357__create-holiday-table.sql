@@ -1,8 +1,7 @@
-CREATE TABLE child_claim (
+CREATE TABLE holiday (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    divorce_case_id UUID UNIQUE,
-    custody_request TEXT,
-    monthly_support DOUBLE PRECISION,
+    holiday_date DATE NOT NULL,
+    description TEXT NOT NULL,
 
     version INTEGER DEFAULT 0,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,

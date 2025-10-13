@@ -22,5 +22,5 @@ public class ChildClaimResponse {
     private Double monthlySupport;
 
     @JsonProperty("children")
-    private List<ChildCreateRequest> children;
+    private List<ChildResponse> children;
 }

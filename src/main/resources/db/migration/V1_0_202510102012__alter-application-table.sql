@@ -1,0 +1,1 @@
+ALTER TABLE application ADD COLUMN application_number TEXT;

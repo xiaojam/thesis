@@ -53,6 +53,7 @@ public class AuthConstant {
     public static final String ROLE_APPROVER = "hasRole('APPROVER')";
     public static final String ROLE_USER = "hasRole('USER')";
     public static final String ROLE_SUPER_USER = "hasRole('SUPER_USER')";
+    public static final String ROLE_ADMINISTRATOR = "hasRole('ADMINISTRATOR')";
 
     public static final String ROLE_VILLAGE = ROLE_REGISTRAR + " or " + ROLE_HEADMAN;
     public static final String ROLE_RELIGIOUS_AFFAIRS = ROLE_OFFICER + " or " + ROLE_APPROVER;
