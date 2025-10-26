@@ -48,4 +48,12 @@ public class MarriageConstant {
         GROOM_KUA,
         OTHER
     }
+
+    public enum GuardianType {
+        FATHER,
+        GRANDFATHER,
+        BROTHER,
+        UNCLE,
+        JUDGE,
+    }
 }

@@ -24,4 +24,6 @@ public interface ApplicationMarriageService {
     ApplicationMarriageApproveResponse approveApplication(ApplicationMarriageApproveRequest request);
 
     ApplicationMarriageUpdateResponse updateApplicationById(UUID applicationId, ApplicationMarriageUpdateRequest request);
+
+    byte[] downloadMarriageDocument(UUID applicationId);
 }

@@ -105,4 +105,8 @@ public class Guardian extends BaseEntity {
 
     @Column
     private String zipCode;
+
+    @Column
+    @Enumerated(EnumType.STRING)
+    private MarriageConstant.GuardianType relationship;
 }

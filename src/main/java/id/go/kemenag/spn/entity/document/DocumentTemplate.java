@@ -1,5 +1,6 @@
 package id.go.kemenag.spn.entity.document;
 
+import id.go.kemenag.spn.constant.DocumentConstant;
 import id.go.kemenag.spn.entity.base.BaseEntity;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -16,7 +17,7 @@ import java.util.UUID;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class Document extends BaseEntity {
+public class DocumentTemplate extends BaseEntity {
 
     @Id
     @UuidGenerator(style = UuidGenerator.Style.AUTO)
@@ -27,17 +28,12 @@ public class Document extends BaseEntity {
     private DocumentConfig config;
 
     @Column
-    private String number;
+    @Enumerated(EnumType.STRING)
+    private DocumentConstant.DocumentType documentType;
 
     @Column
-    private String title;
-
-    @Column(columnDefinition = "TEXT")
-    private String content;
+    private String name;
 
     @Column
     private String filePath;
-
-    @Column
-    private LocalDateTime issuedAt;
 }

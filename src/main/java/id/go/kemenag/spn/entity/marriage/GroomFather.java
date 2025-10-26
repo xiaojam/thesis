@@ -34,6 +34,9 @@ public class GroomFather extends BaseEntity {
     private String alias;
 
     @Column
+    private String fatherName;
+
+    @Column
     @Size(min = 16, max = 16)
     private String identityId;
 
