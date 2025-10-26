@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="id" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <title>Surat Pengantar Perkawinan (Model N1)</title>
+    <style>
+        @page{ size: A4; margin: 2cm}
+        body { font-family: 'Times New Roman', serif; font-size: 9pt; line-height: 1; }
+        h1, h2, h3, h4, h5, h6 { font-size: 1}
+        .header-info { font-size: 8pt; }
+        .header-right { text-align: left; width: 40%; float: right; }
+        .header-left { width: 60%; float: left; }
+        .title { text-align: center; font-weight: bold; font-size: 9pt; margin-top: 15px; margin-bottom: 5px; }
+        .underline { text-decoration: underline; }
+        .content-table { width: 100%; border-collapse: collapse; }
+        .content-table td { padding: 1px 0; vertical-align: top; }
+        .label-column { width: 40%; }
+        .colon-column { width: 5%; text-align: center; }
+        .value-column { width: 55%; }
+        .sub-label { padding-left: 20px; }
+        .closing-section { margin-top: 10px; text-align: justify;}
+        .signature { text-align: center; margin-top: 10px; margin-left: 50%; }
+        .signature .name { margin-top: 50px; font-weight: bold; }
+        .clear { clear: both; }
+    </style>
+</head>
+<body>
+
+<div class="header-info">
+    <div class="header-left">
+    </div>
+    <div class="header-right">
+        Lampiran X<br/>
+        Keputusan Direktur Jenderal Bimbingan<br/>
+        Masyarakat Islam Nomor 473 Tahun 2020<br/>
+        <br/>
+        Model N6
+    </div>
+    <div class="clear"></div>
+</div>
+
+<table class="content-table" style="margin-top: 20px;">
+    <tr>
+        <td class="label-column">Desa/Kelurahan</td>
+        <td class="colon-column">:</td>
+        <td class="value-column" th:text="${ctx.groomDocumentData.subDistrictName}">-</td>
+    </tr>
+    <tr>
+        <td class="label-column">Kecamatan</td>
+        <td class="colon-column">:</td>
+        <td class="value-column" th:text="${ctx.groomDocumentData.districtName}"></td>
+    </tr>
+    <tr>
+        <td class="label-column">Kabupaten/Kota</td>
+        <td class="colon-column">:</td>
+        <td class="value-column" th:text="${ctx.groomDocumentData.cityName}">-</td>
+    </tr>
+</table>
+
+<div class="title">
+    <span class="underline">SURAT KETERANGAN KEMATIAN SUAMI/ISTRI</span><br/>
+    <span style="font-size: 9pt; font-weight: normal;" th:text="'Nomor: ' + ${ctx.groomDocumentData.documentNumber}">-</span>
+</div>
+
+<p>Yang bertanda tangan di bawah ini, menjelaskan dengan sesungguhnya bahwa:</p>
+
+<table class="content-table">
+    <tr>
+        <td class="label-column">1. Nama Lengkap/Alias</td>
+        <td class="colon-column">:</td>
+        <td class="value-column"><strong th:text="${ctx.groomPreviousPartner.fullName}">-</strong></td>
+    </tr>
+    <tr>
+        <td class="label-column">2. Bin/Binti</td>
+        <td class="colon-column">:</td>
+        <td class="value-column" th:text="${ctx.groomPreviousPartner.fatherName}">-</td>
+    </tr>
+    <tr>
+        <td class="label-column">3. Nomor Induk Kependudukan (NIK)</td>
+        <td class="colon-column">:</td>
+        <td class="value-column" th:text="${ctx.groomPreviousPartner.identityId}">-</td>
+    </tr>
+    <tr>
+        <td class="label-column">4. Tempat dan Tanggal Lahir</td>
+        <td class="colon-column">:</td>
+        <td class="value-column" th:text="${ctx.groomPreviousPartner.birth}">-</td>
+    </tr>
+    <tr>
+        <td class="label-column">5. Kewarganegaraan</td>
+        <td class="colon-column">:</td>
+        <td class="value-column" th:text="${ctx.groomPreviousPartner.nationality}">-</td>
+    </tr>
+    <tr>
+        <td class="label-column">6. Agama</td>
+        <td class="colon-column">:</td>
+        <td class="value-column" th:text="${ctx.groomPreviousPartner.religion}">-</td>
+    </tr>
+    <tr>
+        <td class="label-column">7. Pekerjaan</td>
+        <td class="colon-column">:</td>
+        <td class="value-column" th:text="${ctx.groomPreviousPartner.job}">-</td>
+    </tr>
+    <tr>
+        <td class="label-column">8. Alamat</td>
+        <td class="colon-column">:</td>
+        <td class="value-column" th:text="${ctx.groomPreviousPartner.address}">-</td>
+    </tr>
+</table>
+
+<table class="content-table">
+    <tr>
+        <td class="label-column">telah meninggal dunia pada tanggal</td>
+        <td class="colon-column">:</td>
+        <td class="value-column" th:text="${ctx.groomPreviousPartner.deathDate}">-</td>
+    </tr>
+    <tr>
+        <td class="label-column">di</td>
+        <td class="colon-column">:</td>
+        <td class="value-column" th:text="${ctx.groomPreviousPartner.deathPlace}">-</td>
+    </tr>
+</table>
+<br/>
+
+<p style="margin-top: 15px;">yang bersangkutan adalah istri dari:</p>
+
+<table class="content-table">
+    <tr>
+        <td class="label-column">1. Nama Lengkap/Alias</td>
+        <td class="colon-column">:</td>
+        <td class="value-column"><strong th:text="${ctx.groom.fullName}">-</strong></td>
+    </tr>
+    <tr>
+        <td class="label-column">2. Bin/Binti</td>
+        <td class="colon-column">:</td>
+        <td class="value-column" th:text="${ctx.groomFather.fullName}">-</td>
+    </tr>
+    <tr>
+        <td class="label-column">3. Nomor Induk Kependudukan (NIK)</td>
+        <td class="colon-column">:</td>
+        <td class="value-column" th:text="${ctx.groom.identityId}">-</td>
+    </tr>
+    <tr>
+        <td class="label-column">4. Tempat dan Tanggal Lahir</td>
+        <td class="colon-column">:</td>
+        <td class="value-column" th:text="${ctx.groom.birth}">-</td>
+    </tr>
+    <tr>
+        <td class="label-column">5. Kewarganegaraan</td>
+        <td class="colon-column">:</td>
+        <td class="value-column" th:text="${ctx.groom.nationality}">-</td>
+    </tr>
+    <tr>
+        <td class="label-column">6. Agama</td>
+        <td class="colon-column">:</td>
+        <td class="value-column" th:text="${ctx.groom.religion}">-</td>
+    </tr>
+    <tr>
+        <td class="label-column">7. Pekerjaan</td>
+        <td class="colon-column">:</td>
+        <td class="value-column" th:text="${ctx.groom.job}">-</td>
+    </tr>
+    <tr>
+        <td class="label-column">8. Alamat</td>
+        <td class="colon-column">:</td>
+        <td class="value-column" th:text="${ctx.groom.address}">-</td>
+    </tr>
+</table>
+
+<p>Demikian surat pengantar ini dibuat dengan mengingat sumpah jabatan dan untuk dipergunakan sebagaimana mestinya.</p>
+
+<div class="signature">
+    <p th:text="${ctx.groomDocumentData.createdDate}">Cangkir, 16 Oktober 2025</p>
+    <p>Kepala Desa/Lurah</p>
+    <p class="name"><span class="underline" th:text="${ctx.groomDocumentData.headVillageName}">-</span></p>
+</div>
+
+</body>
+</html>

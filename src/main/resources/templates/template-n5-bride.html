@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="id" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <title>Surat Pengantar Perkawinan (Model N1)</title>
+    <style>
+        @page{ size: A4; margin: 2cm}
+        body { font-family: 'Times New Roman', serif; font-size: 9pt; line-height: 1; }
+        h1, h2, h3, h4, h5, h6 { font-size: 1}
+        .header-info { font-size: 8pt; }
+        .header-right { text-align: left; width: 40%; float: right; }
+        .header-left { width: 60%; float: left; }
+        .title { text-align: center; font-weight: bold; font-size: 9pt; margin-top: 15px; margin-bottom: 5px; }
+        .underline { text-decoration: underline; }
+        .bold { font-weight: bold; }
+        .content-table { width: 100%; border-collapse: collapse; }
+        .content-table td { padding: 1px 0; vertical-align: top; }
+        .label-column { width: 40%; }
+        .colon-column { width: 5%; text-align: center; }
+        .value-column { width: 55%; }
+        .sub-label { padding-left: 20px; }
+        .closing-section { margin-top: 10px; text-align: justify;}
+        .signature { text-align: center; margin-top: 10px; margin-left: 50%; }
+        .signature .name { margin-top: 40px; font-weight: bold; }
+        .closing-info { text-align: right; margin-top: 10px; }
+        .signature-table { width: 100%; margin-top: 10px; border-collapse: collapse; }
+        .signature-cell { width: 50%; text-align: center; }
+        .signature-space { margin-top: 50px; }
+        .clear { clear: both; }
+    </style>
+</head>
+<body>
+
+<div class="header-info">
+    <div class="header-left">
+    </div>
+    <div class="header-right">
+        Lampiran IX<br/>
+        Keputusan Direktur Jenderal Bimbingan<br/>
+        Masyarakat Islam Nomor 473 Tahun 2020<br/>
+        <br/>
+        Model N5
+    </div>
+    <div class="clear"></div>
+</div>
+
+<div class="title">
+    <span class="underline">SURAT IZIN ORANG TUA</span><br/>
+
+</div>
+
+<p>Yang bertanda tangan di bawah ini:</p>
+
+<table class="content-table">
+    <tr>
+        <td class="label-column">A.&#160;1. Nama Lengkap/Alias</td>
+        <td class="colon-column">:</td>
+        <td class="value-column"><strong th:text="${ctx.brideFather.fullName}">-</strong></td>
+    </tr>
+    <tr>
+        <td class="label-column">&#160;&#160;&#160;2. Bin/Binti</td>
+        <td class="colon-column">:</td>
+        <td class="value-column" th:text="${ctx.brideFather.fatherName}">-</td>
+    </tr>
+    <tr>
+        <td class="label-column">&#160;&#160;&#160;3. Nomor Induk Kependudukan (NIK)</td>
+        <td class="colon-column">:</td>
+        <td class="value-column" th:text="${ctx.brideFather.identityId}">-</td>
+    </tr>
+    <tr>
+        <td class="label-column">&#160;&#160;&#160;4. Tempat, Tanggal Lahir</td>
+        <td class="colon-column">:</td>
+        <td class="value-column" th:text="${ctx.brideFather.birth}">-</td>
+    </tr>
+    <tr>
+        <td class="label-column">&#160;&#160;&#160;5. Kewarganegaraan</td>
+        <td class="colon-column">:</td>
+        <td class="value-column" th:text="${ctx.brideFather.nationality}">-</td>
+    </tr>
+    <tr>
+        <td class="label-column">&#160;&#160;&#160;6. Agama</td>
+        <td class="colon-column">:</td>
+        <td class="value-column" th:text="${ctx.brideFather.religion}">-</td>
+    </tr>
+    <tr>
+        <td class="label-column">&#160;&#160;&#160;7. Pekerjaan</td>
+        <td class="colon-column">:</td>
+        <td class="value-column" th:text="${ctx.brideFather.job}">-</td>
+    </tr>
+    <tr>
+        <td class="label-column">&#160;&#160;&#160;8. Alamat</td>
+        <td class="colon-column">:</td>
+        <td class="value-column" th:text="${ctx.brideFather.address}">-</td>
+    </tr>
+</table>
+
+<p></p>
+
+<table class="content-table">
+    <tr>
+        <td class="label-column">B.&#160;1. Nama Lengkap/Alias</td>
+        <td class="colon-column">:</td>
+        <td class="value-column"><strong th:text="${ctx.brideMother.fullName}">-</strong></td>
+    </tr>
+    <tr>
+        <td class="label-column">&#160;&#160;&#160;2. Bin/Binti</td>
+        <td class="colon-column">:</td>
+        <td class="value-column" th:text="${ctx.brideMother.fatherName}">-</td>
+    </tr>
+    <tr>
+        <td class="label-column">&#160;&#160;&#160;3. Nomor Induk Kependudukan (NIK)</td>
+        <td class="colon-column">:</td>
+        <td class="value-column" th:text="${ctx.brideMother.identityId}">-</td>
+    </tr>
+    <tr>
+        <td class="label-column">&#160;&#160;&#160;4. Tempat, Tanggal Lahir</td>
+        <td class="colon-column">:</td>
+        <td class="value-column" th:text="${ctx.brideMother.birth}">-</td>
+    </tr>
+    <tr>
+        <td class="label-column">&#160;&#160;&#160;5. Kewarganegaraan</td>
+        <td class="colon-column">:</td>
+        <td class="value-column" th:text="${ctx.brideMother.nationality}">-</td>
+    </tr>
+    <tr>
+        <td class="label-column">&#160;&#160;&#160;6. Agama</td>
+        <td class="colon-column">:</td>
+        <td class="value-column" th:text="${ctx.brideMother.religion}">-</td>
+    </tr>
+    <tr>
+        <td class="label-column">&#160;&#160;&#160;7. Pekerjaan</td>
+        <td class="colon-column">:</td>
+        <td class="value-column" th:text="${ctx.brideMother.job}">-</td>
+    </tr>
+    <tr>
+        <td class="label-column">&#160;&#160;&#160;8. Alamat</td>
+        <td class="colon-column">:</td>
+        <td class="value-column" th:text="${ctx.brideMother.address}">-</td>
+    </tr>
+</table>
+
+<p style="margin-top: 15px;">adalah ayah dan ibu kandung dari</p>
+
+<table class="content-table">
+    <tr>
+        <td class="label-column">1. Nama Lengkap/Alias</td>
+        <td class="colon-column">:</td>
+        <td class="value-column"><strong th:text="${ctx.bride.fullName}">-</strong></td>
+    </tr>
+    <tr>
+        <td class="label-column">2. Nomor Induk Kependudukan (NIK)</td>
+        <td class="colon-column">:</td>
+        <td class="value-column" th:text="${ctx.bride.identityId}">-</td>
+    </tr>
+    <tr>
+        <td class="label-column">3. Jenis Kelamin</td>
+        <td class="colon-column">:</td>
+        <td class="value-column" th:text="${ctx.bride.gender}">-</td>
+    </tr>
+    <tr>
+        <td class="label-column">4. Tempat dan Tanggal Lahir</td>
+        <td class="colon-column">:</td>
+        <td class="value-column" th:text="${ctx.bride.birth}">-</td>
+    </tr>
+    <tr>
+        <td class="label-column">5. Kewarganegaraan</td>
+        <td class="colon-column">:</td>
+        <td class="value-column" th:text="${ctx.bride.nationality}">-</td>
+    </tr>
+    <tr>
+        <td class="label-column">6. Agama</td>
+        <td class="colon-column">:</td>
+        <td class="value-column" th:text="${ctx.bride.religion}">-</td>
+    </tr>
+    <tr>
+        <td class="label-column">7. Pekerjaan</td>
+        <td class="colon-column">:</td>
+        <td class="value-column" th:text="${ctx.bride.job}">-</td>
+    </tr>
+    <tr>
+        <td class="label-column">8. Alamat</td>
+        <td class="colon-column">:</td>
+        <td class="value-column" th:text="${ctx.bride.address}">-</td>
+    </tr>
+</table>
+
+<p style="margin-top: 15px;">memberikan izin kepada anak kami untuk melakukan perkawinan dengan</p>
+
+<table class="content-table">
+    <tr>
+        <td class="label-column">1. Nama Lengkap/Alias</td>
+        <td class="colon-column">:</td>
+        <td class="value-column"><strong th:text="${ctx.groom.fullName}">-</strong></td>
+    </tr>
+    <tr>
+        <td class="label-column">2. Nomor Induk Kependudukan (NIK)</td>
+        <td class="colon-column">:</td>
+        <td class="value-column" th:text="${ctx.groom.identityId}">-</td>
+    </tr>
+    <tr>
+        <td class="label-column">3. Jenis Kelamin</td>
+        <td class="colon-column">:</td>
+        <td class="value-column" th:text="${ctx.groom.gender}">-</td>
+    </tr>
+    <tr>
+        <td class="label-column">4. Tempat dan Tanggal Lahir</td>
+        <td class="colon-column">:</td>
+        <td class="value-column" th:text="${ctx.groom.birth}">-</td>
+    </tr>
+    <tr>
+        <td class="label-column">5. Kewarganegaraan</td>
+        <td class="colon-column">:</td>
+        <td class="value-column" th:text="${ctx.groom.nationality}">-</td>
+    </tr>
+    <tr>
+        <td class="label-column">6. Agama</td>
+        <td class="colon-column">:</td>
+        <td class="value-column" th:text="${ctx.groom.religion}">-</td>
+    </tr>
+    <tr>
+        <td class="label-column">7. Pekerjaan</td>
+        <td class="colon-column">:</td>
+        <td class="value-column" th:text="${ctx.groom.job}">-</td>
+    </tr>
+    <tr>
+        <td class="label-column">8. Alamat</td>
+        <td class="colon-column">:</td>
+        <td class="value-column" th:text="${ctx.groom.address}">-</td>
+    </tr>
+</table>
+
+<p>Demikian surat izin ini dibuat dengan kesadaran tanpa ada paksaan dari siapapun dan untuk dipergunakan seperlunya. </p>
+
+<table class="signature-table">
+    <tr>
+        <td class="signature-cell">
+            <p><br/></p>
+            <p>Ayah</p>
+            <p class="signature-space">
+                <span class="underline bold" th:text="${ctx.brideFather.signName}">[Nama Ayah]</span>
+            </p>
+        </td>
+        <td class="signature-cell">
+            <p th:text="${ctx.brideDocumentData.createdDate}">Cangkir, 16 Oktober 2025</p>
+            <p>Ibu</p>
+            <p class="signature-space">
+                <span class="underline bold" th:text="${ctx.brideMother.signName}">[Nama Ibu]</span>
+            </p>
+        </td>
+    </tr>
+</table>
+
+</body>
+</html>

@@ -12,6 +12,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -63,5 +64,17 @@ public class MarriageController {
     @Operation(summary = "update", description = "approve application")
     ApplicationMarriageApproveResponse approveApplication(@RequestBody @Valid ApplicationMarriageApproveRequest request) {
         return this.applicationMarriageService.approveApplication(request);
+    }
+
+    @GetMapping("/download/document/{applicationId}")
+    @ResponseStatus(HttpStatus.OK)
+    @PreAuthorize(AuthConstant.ROLE_HEADMAN)
+    @Operation(summary = "download", description = "download marriage document")
+    ResponseEntity<byte[]> downloadMarriageDocument(@PathVariable UUID applicationId) {
+        byte[] document = this.applicationMarriageService.downloadMarriageDocument(applicationId);
+        return ResponseEntity
+            .ok()
+            .header("Content-Disposition", "attachment; filename=marriage_document_" + applicationId + ".zip")
+            .body(document);
     }
 }

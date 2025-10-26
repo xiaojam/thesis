@@ -1,9 +1,6 @@
 package id.go.kemenag.spn.service.impl.marriage;
 
-import id.go.kemenag.spn.constant.ActivityIdConstant;
-import id.go.kemenag.spn.constant.ApplicationConstant;
-import id.go.kemenag.spn.constant.FormatterConstant;
-import id.go.kemenag.spn.constant.MarriageConstant;
+import id.go.kemenag.spn.constant.*;
 import id.go.kemenag.spn.dto.application.request.*;
 import id.go.kemenag.spn.dto.application.response.*;
 import id.go.kemenag.spn.dto.camunda.request.CamundaCompleteUserTaskRequest;
@@ -19,6 +16,7 @@ import id.go.kemenag.spn.service.marriage.ApplicationMarriageService;
 import id.go.kemenag.spn.service.marriage.BrideService;
 import id.go.kemenag.spn.service.marriage.GroomService;
 import id.go.kemenag.spn.service.marriage.MarriageService;
+import id.go.kemenag.spn.service.master.MasterService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -81,6 +79,12 @@ public class ApplicationMarriageServiceImpl implements ApplicationMarriageServic
 
     @Autowired
     private AuthService authService;
+
+    @Autowired
+    private DocumentService documentService;
+
+    @Autowired
+    private MasterService masterService;
 
     @Override
     public ApplicationCreateResponse createMarriage(ApplicationMarriageCreateRequest request) {
@@ -357,6 +361,33 @@ public class ApplicationMarriageServiceImpl implements ApplicationMarriageServic
             .builder()
             .applicationId(applicationId)
             .build();
+    }
+
+    @Override
+    public byte[] downloadMarriageDocument(UUID applicationId) {
+        var user = this.authService.getCurrentUser();
+
+        var marriage = this.marriageService.findByApplicationId(applicationId);
+        if (marriage == null) {
+            throw new BusinessErrorException(HttpStatus.NOT_FOUND, "Application not found");
+        }
+
+        var userWorkplaceCode = user.getWorkplaceCode();
+        var brideSubDistrictCode = marriage.getBride().getSubDistrictCode();
+        var groomSubDistrictCode = marriage.getGroom().getSubDistrictCode();
+
+        DocumentConstant.BundleMarriageType bundleType;
+        if (Objects.equals(userWorkplaceCode, brideSubDistrictCode) && Objects.equals(userWorkplaceCode, groomSubDistrictCode)) {
+            bundleType = DocumentConstant.BundleMarriageType.COMPLETE;
+        } else if (Objects.equals(userWorkplaceCode, brideSubDistrictCode)) {
+            bundleType = DocumentConstant.BundleMarriageType.BRIDE_ONLY;
+        } else if (Objects.equals(userWorkplaceCode, groomSubDistrictCode)) {
+            bundleType = DocumentConstant.BundleMarriageType.GROOM_ONLY;
+        } else {
+            throw new BusinessErrorException(HttpStatus.FORBIDDEN, "You are not authorized to download this document");
+        }
+
+        return this.documentService.downloadMarriageDocument(marriage, user, bundleType);
     }
 
     private void validateCoupleData(ApplicationMarriageRequest request, Groom groom, Bride bride) {

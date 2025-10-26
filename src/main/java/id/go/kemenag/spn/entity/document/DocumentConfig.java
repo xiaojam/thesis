@@ -25,7 +25,7 @@ public class DocumentConfig extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "workplace_id")
-    private Master village;
+    private Master workplace;
 
     @Column
     private String headName;

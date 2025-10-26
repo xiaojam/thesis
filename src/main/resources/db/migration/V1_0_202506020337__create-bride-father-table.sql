@@ -3,6 +3,7 @@ CREATE TABLE IF NOT EXISTS bride_father (
     first_name TEXT NOT NULL,
     last_name TEXT NULL,
     alias TEXT NULL,
+    father_name TEXT NULL,
     identity_id VARCHAR(16) NOT NULL,
     birth_place TEXT NULL,
     birth_date DATE NULL,
