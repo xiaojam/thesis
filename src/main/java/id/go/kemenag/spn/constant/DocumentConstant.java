@@ -30,6 +30,9 @@ public class DocumentConstant {
         // Keterangan Wali Nikah
         WN,
 
+        // HISTORY
+        UPDATE_HISTORY,
+
         // Divorce Documents
         PROPERTY,
         CHILD_CUSTODY,

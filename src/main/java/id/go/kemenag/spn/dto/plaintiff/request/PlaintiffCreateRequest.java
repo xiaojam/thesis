@@ -51,8 +51,17 @@ public class PlaintiffCreateRequest {
     @JsonProperty("education")
     private String education;
 
+    @JsonProperty("gender")
+    private DivorceConstant.Gender gender;
+
+    @JsonProperty("father_name")
+    private String fatherName;
+
     @JsonProperty("job")
     private String job;
+
+    @JsonProperty("salary")
+    private Double salary;
 
     @JsonProperty("phone_number")
     private String phoneNumber;

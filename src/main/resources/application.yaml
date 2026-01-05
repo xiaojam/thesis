@@ -23,7 +23,7 @@ spring:
   datasource:
     url: jdbc:postgresql://localhost:5430/spn
     username: admin
-    password: "@Rojam456"
+    password: "########"
     hikari:
       maximum-pool-size: 5
   data:
@@ -36,8 +36,8 @@ spring:
 camunda:
   bpm:
     admin-user:
-      id: xiaojam
-      password: "@Rojam456"
+      id: admin
+      password: "########"
 
 setting:
   security:
@@ -46,7 +46,7 @@ setting:
       value: "53257172-B163-4FBC-8E9E-48DD27E4575C"
     auth:
       key: "jwt-secret"
-      value: "@M4CH12U5HAL!Y51R074MMUSHL!CH"
+      value: "########"
     ttl: 3600
     refreshTtl: 72000
   feature:

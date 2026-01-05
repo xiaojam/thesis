@@ -3,10 +3,15 @@ package id.go.kemenag.spn.service.impl;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.openhtmltopdf.pdfboxout.PdfRendererBuilder;
 import id.go.kemenag.spn.config.custom.CustomUserDetails;
+import id.go.kemenag.spn.constant.DivorceConstant;
 import id.go.kemenag.spn.constant.DocumentConstant;
-import id.go.kemenag.spn.constant.MarriageConstant;
-import id.go.kemenag.spn.dto.document.*;
+import id.go.kemenag.spn.constant.FormatterConstant;
+import id.go.kemenag.spn.dto.document.divorce.*;
+import id.go.kemenag.spn.dto.document.marriage.*;
+import id.go.kemenag.spn.dto.document.updatehistory.UpdateHistoryDto;
 import id.go.kemenag.spn.entity.Application;
+import id.go.kemenag.spn.entity.UpdateHistory;
+import id.go.kemenag.spn.entity.divorce.*;
 import id.go.kemenag.spn.entity.document.DocumentConfig;
 import id.go.kemenag.spn.entity.document.DocumentTemplate;
 import id.go.kemenag.spn.entity.document.GeneratedDocument;
@@ -18,10 +23,13 @@ import id.go.kemenag.spn.repository.document.DocumentTemplateRepository;
 import id.go.kemenag.spn.repository.document.GeneratedDocumentRepository;
 import id.go.kemenag.spn.service.AuthService;
 import id.go.kemenag.spn.service.DocumentService;
+import id.go.kemenag.spn.service.UpdateHistoryService;
 import id.go.kemenag.spn.service.master.MasterService;
 import id.go.kemenag.spn.util.CommonUtil;
 import lombok.extern.slf4j.Slf4j;
+import org.flywaydb.core.internal.util.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.repository.query.Param;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,10 +38,10 @@ import org.thymeleaf.context.Context;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.text.NumberFormat;
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
+import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -62,6 +70,11 @@ public class DocumentServiceImpl implements DocumentService {
     @Autowired
     private ObjectMapper objectMapper;
 
+    @Autowired
+    private UpdateHistoryService updateHistoryService;
+
+    private static final Locale INDONESIA = new Locale("id", "ID");
+
     @Override
     @Transactional
     public byte[] downloadMarriageDocument(
@@ -69,11 +82,12 @@ public class DocumentServiceImpl implements DocumentService {
         CustomUserDetails user,
         DocumentConstant.BundleMarriageType bundleMarriageType
     ) {
+        Set<String> alreadyAddedFiles = new HashSet<>();
 
         MarriageDocumentDto globalContext = this.buildMarriageContext(marriage, user);
 
         if (DocumentConstant.BundleMarriageType.COMPLETE.equals(bundleMarriageType)) {
-            return this.processAllDocuments(marriage, user, globalContext);
+            return this.processAllDocuments(marriage, globalContext, user.getWorkplaceCode(), alreadyAddedFiles);
         }
 
         var isBride = DocumentConstant.BundleMarriageType.BRIDE_ONLY.equals(bundleMarriageType);
@@ -85,24 +99,33 @@ public class DocumentServiceImpl implements DocumentService {
         );
 
         if  (isBride) {
-            return this.processBrideMarriageDocument(marriage, globalContext, documentTypes);
+            return this.processBrideMarriageDocument(
+                marriage,
+                globalContext,
+                documentTypes,
+                user.getWorkplaceCode(),
+                alreadyAddedFiles
+            );
         }
 
-        return this.processGroomMarriageDocument(marriage, globalContext, documentTypes);
+        return this.processGroomMarriageDocument(
+            marriage,
+            globalContext,
+            documentTypes,
+            user.getWorkplaceCode(),
+            alreadyAddedFiles
+        );
     }
 
-    private byte[] processAllDocuments(Marriage marriage, CustomUserDetails user, MarriageDocumentDto globalContext) {
+    private byte[] processAllDocuments(
+        Marriage marriage,
+        MarriageDocumentDto globalContext,
+        String workplaceId,
+        Set<String> alreadyAddedFiles
+    ) {
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
 
         try (ZipOutputStream zos = new ZipOutputStream(byteArrayOutputStream)) {
-
-            var isPreviousPartnerDeceasedBride = isPreviousPartnerDeceased(marriage, Boolean.TRUE);
-            List<DocumentConstant.DocumentType> documentBrideTypes = this.getMarriageDocumentTypes(
-                isPreviousPartnerDeceasedBride,
-                Boolean.TRUE
-            );
-
-            this.generateAndAddDocumentsToZip(zos, marriage, globalContext, documentBrideTypes, Boolean.TRUE);
 
             var isPreviousPartnerDeceasedGroom = isPreviousPartnerDeceased(marriage, Boolean.FALSE);
             List<DocumentConstant.DocumentType> documentGroomTypes = this.getMarriageDocumentTypes(
@@ -110,7 +133,31 @@ public class DocumentServiceImpl implements DocumentService {
                 Boolean.FALSE
             );
 
-            this.generateAndAddDocumentsToZip(zos, marriage, globalContext, documentGroomTypes, Boolean.FALSE);
+            this.generateAndAddDocumentsToZip(
+                zos,
+                marriage,
+                globalContext,
+                documentGroomTypes,
+                Boolean.FALSE,
+                workplaceId,
+                alreadyAddedFiles
+            );
+
+            var isPreviousPartnerDeceasedBride = isPreviousPartnerDeceased(marriage, Boolean.TRUE);
+            List<DocumentConstant.DocumentType> documentBrideTypes = this.getMarriageDocumentTypes(
+                isPreviousPartnerDeceasedBride,
+                Boolean.TRUE
+            );
+
+            this.generateAndAddDocumentsToZip(
+                zos,
+                marriage,
+                globalContext,
+                documentBrideTypes,
+                Boolean.TRUE,
+                workplaceId,
+                alreadyAddedFiles
+            );
 
         } catch (Exception e) {
             log.error("Gagal membuat bundel dokumen lengkap untuk aplikasi {}: {}", marriage.getApplication().getId(), e.getMessage(), e);
@@ -136,7 +183,6 @@ public class DocumentServiceImpl implements DocumentService {
 
     private MarriageDocumentDto buildMarriageContext(Marriage marriage, CustomUserDetails user) {
         MarriageDocumentDto dto = new MarriageDocumentDto();
-        
         var brideDto = this.processMarriageDocumentBrideDto(marriage, marriage.getBride().getPreviousPartner() != null ?
             CommonUtil.buildFullName(
                 marriage.getBride().getPreviousPartner().getFirstName(),
@@ -162,6 +208,7 @@ public class DocumentServiceImpl implements DocumentService {
         var groomPreviousPartnerDto = this.processMarriageDocumentGroomPreviousPartnerDto(marriage);
         var brideDocumentDataDto = this.processBrideDocumentDataDto(marriage, user);
         var groomDocumentDataDto = this.processGroomDocumentDataDto(marriage, user);
+        var histories = this.processHistoriesDto(marriage.getApplication().getId());
         
         dto.setBride(brideDto);
         dto.setGroom(groomDto);
@@ -175,8 +222,33 @@ public class DocumentServiceImpl implements DocumentService {
         dto.setGroomPreviousPartner(groomPreviousPartnerDto);
         dto.setBrideDocumentData(brideDocumentDataDto);
         dto.setGroomDocumentData(groomDocumentDataDto);
+        dto.setHistories(histories);
         
         return dto;
+    }
+
+    private List<UpdateHistoryDto> processHistoriesDto(UUID applicationId) {
+        List<UpdateHistoryDto> histories = new ArrayList<>();
+
+        var updateHistories = this.updateHistoryService.findAllByApplicationId(applicationId);
+        if (updateHistories == null || updateHistories.isEmpty()) {
+            return histories;
+        }
+
+        updateHistories.forEach(
+            u -> {
+                UpdateHistoryDto dto = new UpdateHistoryDto();
+                dto.setLabel(CommonUtil.normalizeDocumentLabel(u.getLabel()));
+                dto.setOldValue(u.getOldValue());
+                dto.setNewValue(u.getNewValue());
+                dto.setTime(CommonUtil.normalizeZonedDateTime(u.getCreatedAt()));
+                dto.setHandler(u.getUpdatedBy());
+
+                histories.add(dto);
+            }
+        );
+
+        return histories;
     }
 
     @Override
@@ -185,14 +257,253 @@ public class DocumentServiceImpl implements DocumentService {
         return this.documentConfigRepository.findByWorkplace_CodeAndServiceTypeAndDeletedFalse(workplaceId, serviceType).orElse(null);
     }
 
+    @Override
+    public byte[] downloadDivorceDocument(DivorceCase divorceCase) {
+        DivorceDocumentDto documentDto = this.buildDocumentDto(divorceCase);
+
+        Context context = new Context(INDONESIA);
+        context.setVariable("documentDto", documentDto);
+
+        DocumentConstant.DocumentType docType = this.mapCaseTypeToDocumentType(divorceCase.getCaseType());
+        DocumentConstant.ServiceType serviceType = DocumentConstant.ServiceType.DIVORCE;
+        String workplaceCode = divorceCase.getCourtCode();
+
+        DocumentTemplate template = this.findTemplateByContext(docType, serviceType, workplaceCode);
+
+        String templateName = template.getFilePath();
+
+        String processedHtml = templateEngine.process(templateName, context);
+
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        try {
+            PdfRendererBuilder builder = new PdfRendererBuilder();
+            builder.withHtmlContent(processedHtml, "file:///");
+            builder.toStream(outputStream);
+            builder.run();
+            return outputStream.toByteArray();
+        } catch (Exception e) {
+            throw new RuntimeException("Gagal membuat dokumen PDF.", e);
+        }
+    }
+
+    private DocumentConstant.DocumentType mapCaseTypeToDocumentType(DivorceConstant.CaseType caseType) {
+        if (caseType == null) {
+            return DocumentConstant.DocumentType.BASIC;
+        }
+
+        return switch (caseType) {
+            case COMPLETE -> DocumentConstant.DocumentType.COMPLETE;
+            case PROPERTY -> DocumentConstant.DocumentType.PROPERTY;
+            case CHILD_CUSTODY -> DocumentConstant.DocumentType.CHILD_CUSTODY;
+            default -> DocumentConstant.DocumentType.BASIC;
+        };
+    }
+
+    private DivorceDocumentDto buildDocumentDto(DivorceCase divorceCase) {
+        DivorceDocumentDto dto = new DivorceDocumentDto();
+
+        dto.setCaseType(divorceCase.getCaseType().name());
+        dto.setCaseTitle(formatCaseTitle(divorceCase.getCaseType()));
+        dto.setCourtName(divorceCase.getCourtName());
+        dto.setCourtCity(divorceCase.getCourtName());
+
+        dto.setPlaintiff(processPlaintiffDto(divorceCase.getPlaintiff()));
+        dto.setDefendant(processDefendantDto(divorceCase.getDefendant()));
+
+        dto.setMarriageData(processMarriageDto(divorceCase.getMarriageData()));
+        dto.setDivorceReason(processReasonDto(divorceCase.getDivorceReason(), divorceCase.getReconciliationAttemptDescription()));
+
+        dto.setIddahSupportAmount(CommonUtil.formatCurrency(divorceCase.getIddahSupportAmount()));
+        dto.setMutahDescription(divorceCase.getMutahDescription());
+        dto.setMaddiyahSupportAmount(CommonUtil.formatCurrency(divorceCase.getMaddiyahSupportAmount()));
+        dto.setMaddiyahDurationInMonths(formatDuration(divorceCase.getMaddiyahDurationInMonths()));
+
+        dto.setChildClaim(processChildClaimDto(divorceCase.getChildClaim()));
+        dto.setPropertyClaim(processPropertyClaimDto(divorceCase.getPropertyClaim()));
+
+        return dto;
+    }
+
+
+    private DivorceDocumentPlaintiffDto processPlaintiffDto(Plaintiff p) {
+        if (p == null) return null;
+        DivorceDocumentPlaintiffDto dto = new DivorceDocumentPlaintiffDto();
+
+        var fullName = p.getFirstName() + " " + p.getLastName();
+        var isMale = DivorceConstant.Gender.MALE.equals(p.getGender());
+        var fullAddress = CommonUtil.buildFullAddress(
+            p.getAddress(),
+            p.getRt(),
+            p.getRw(),
+            p.getSubDistrictName(),
+            p.getDistrictName(),
+            p.getCityName(),
+            p.getProvinceName(),
+            p.getZipCode()
+        );
+
+        dto.setFullName(CommonUtil.buildFullNameWithFatherName(fullName, p.getFatherName(), isMale));
+        dto.setIdentityId(p.getIdentityNumber());
+        dto.setBirth(CommonUtil.buildBirthInfo(p.getBirthPlace(), p.getBirthDate()));
+        dto.setGender(CommonUtil.normalizeGender(p.getGender()));
+        dto.setReligion(CommonUtil.normalizeReligion(p.getReligion()));
+        dto.setEducation(p.getEducation());
+        dto.setJob(p.getJob());
+        dto.setSalary(CommonUtil.formatCurrency(p.getSalary()));
+        dto.setPhoneNumber(p.getPhoneNumber());
+        dto.setAddress(fullAddress);
+        dto.setSignName(CommonUtil.simplifiedName(p.getFirstName(), p.getLastName()));
+
+        return dto;
+    }
+
+    private DivorceDocumentDefendantDto processDefendantDto(Defendant d) {
+        if (d == null) return null;
+        DivorceDocumentDefendantDto dto = new DivorceDocumentDefendantDto();
+
+        var fullName = d.getFirstName() + " " + d.getLastName();
+        var isMale = DivorceConstant.Gender.MALE.equals(d.getGender());
+
+        var fullAddress = CommonUtil.buildFullAddress(
+            d.getAddress(),
+            d.getRt(),
+            d.getRw(),
+            d.getSubDistrictName(),
+            d.getDistrictName(),
+            d.getCityName(),
+            d.getProvinceName(),
+            d.getZipCode()
+        );
+
+        dto.setFullName(CommonUtil.buildFullNameWithFatherName(fullName, d.getFatherName(), isMale));
+        dto.setIdentityId(d.getIdentityNumber());
+        dto.setBirth(CommonUtil.buildBirthInfo(d.getBirthPlace(), d.getBirthDate()));
+        dto.setGender(CommonUtil.normalizeGender(d.getGender()));
+        dto.setReligion(CommonUtil.normalizeReligion(d.getReligion()));
+        dto.setJob(d.getJob());
+        dto.setSalary(CommonUtil.formatCurrency(d.getSalary()));
+        dto.setEducation(d.getEducation());
+        dto.setPhoneNumber(d.getPhoneNumber());
+        dto.setAddress(fullAddress);
+
+        return dto;
+    }
+
+    private DivorceDocumentMarriageDataDto processMarriageDto(MarriageData m) {
+        DivorceDocumentMarriageDataDto dto = new DivorceDocumentMarriageDataDto();
+
+        dto.setMarriageDate(CommonUtil.normalizeDate(m.getMarriageDate()));
+        dto.setMarriagePlace(m.getMarriagePlace());
+        dto.setMarriageCertificateNumber(m.getMarriageCertificateNumber());
+        dto.setHouseholdAddress(m.getHouseholdAddress());
+
+        return dto;
+    }
+
+    private DivorceDocumentReasonDto processReasonDto(DivorceReason r, String reconciliationAttempt) {
+        DivorceDocumentReasonDto dto = new DivorceDocumentReasonDto();
+
+        dto.setConflictStartDate(CommonUtil.normalizeDate(r.getConflictStartDate()));
+        dto.setConflictClimaxDate(CommonUtil.normalizeDate(r.getConflictClimaxDate()));
+        dto.setSeparationDate(CommonUtil.normalizeDate(r.getSeparationDate()));
+        dto.setConflictCauses(r.getConflictCauses() != null ? r.getConflictCauses() : Collections.emptyList());
+        dto.setReconciliationAttemptDescription(reconciliationAttempt);
+        dto.setTotalSeparationDuration(
+            CommonUtil.normalizeTotalDuration(r.getSeparationDate(), r.getCreatedAt().toLocalDate())
+        );
+
+        return dto;
+    }
+
+    private DivorceDocumentChildClaimDto processChildClaimDto(ChildClaim c) {
+        if (c == null || c.getChildren() == null || c.getChildren().isEmpty()) return null;
+
+        DivorceDocumentChildClaimDto dto = new DivorceDocumentChildClaimDto();
+
+        dto.setChildCount(String.valueOf(c.getChildren().size()));
+        dto.setMonthlySupport(CommonUtil.formatCurrency(c.getMonthlySupport()));
+        dto.setChildren(
+            c.getChildren().stream()
+                .map(this::processChildDto)
+                .collect(Collectors.toList())
+        );
+
+        return dto;
+    }
+
+    private DivorceDocumentChildrenDto processChildDto(Child c) {
+        DivorceDocumentChildrenDto dto = new DivorceDocumentChildrenDto();
+
+        dto.setFullName(c.getName());
+        dto.setGender(c.getGender());
+        dto.setAge(c.getAge() != null ? c.getAge() + " tahun" : null);
+
+        return dto;
+    }
+
+    private DivorceDocumentPropertyClaimDto processPropertyClaimDto(PropertyClaim pc) {
+        if (pc == null || pc.getProperties() == null || pc.getProperties().isEmpty()) return null;
+
+        DivorceDocumentPropertyClaimDto dto = new DivorceDocumentPropertyClaimDto();
+
+        dto.setDivisionRequest(pc.getDivisionRequest());
+        dto.setProperties(
+            pc.getProperties().stream()
+                .map(this::processPropertyDto)
+                .collect(Collectors.toList())
+        );
+
+        return dto;
+    }
+
+    private DivorceDocumentPropertiesDto processPropertyDto(SharedProperty sp) {
+        DivorceDocumentPropertiesDto dto = new DivorceDocumentPropertiesDto();
+
+        dto.setPropertyType(sp.getPropertyType());
+        dto.setDescription(sp.getDescription());
+        dto.setOwnershipProof(sp.getOwnershipProof());
+        dto.setEstimatedValue(CommonUtil.formatCurrency(sp.getEstimatedValue()));
+
+        return dto;
+    }
+
+    private String formatDuration(Integer months) {
+        if (months == null) return null;
+        return months + " bulan";
+    }
+
+    private String formatCaseTitle(DivorceConstant.CaseType caseType) {
+        switch (caseType) {
+            case BASIC:
+                return "GUGATAN PERCERAIAN";
+            case CHILD_CUSTODY:
+                return "GUGATAN PERCERAIAN, HAK ASUH ANAK, DAN NAFKAH ANAK";
+            case PROPERTY:
+                return "GUGATAN PERCERAIAN DAN HARTA BERSAMA";
+            case COMPLETE:
+                return "GUGATAN PERCERAIAN, HAK ASUH ANAK, NAFKAH ANAK, DAN HARTA BERSAMA";
+            default:
+                return "GUGATAN PERCERAIAN";
+        }
+    }
+
     private byte[] processBrideMarriageDocument(
         Marriage marriage,
         MarriageDocumentDto globalContext,
-        List<DocumentConstant.DocumentType> documentTypes
+        List<DocumentConstant.DocumentType> documentTypes,
+        String userWorkplaceId,
+        Set<String> alreadyAddedFiles
     ) {
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         try(ZipOutputStream zos = new ZipOutputStream(byteArrayOutputStream)) {
-            return this.generateZipBundleInternal(marriage, globalContext, documentTypes, Boolean.TRUE);
+            return this.generateZipBundleInternal(
+                marriage,
+                globalContext,
+                documentTypes,
+                Boolean.TRUE,
+                userWorkplaceId,
+                alreadyAddedFiles
+            );
         } catch (Exception e) {
             throw new BusinessErrorException(HttpStatus.UNPROCESSABLE_ENTITY, "Failed to generate document");
         }
@@ -201,11 +512,20 @@ public class DocumentServiceImpl implements DocumentService {
     private byte[] processGroomMarriageDocument(
         Marriage marriage,
         MarriageDocumentDto globalContext,
-        List<DocumentConstant.DocumentType> documentTypes
+        List<DocumentConstant.DocumentType> documentTypes,
+        String userWorkplaceId,
+        Set<String> alreadyAddedFiles
     ) {
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         try(ZipOutputStream zos = new ZipOutputStream(byteArrayOutputStream)) {
-            return this.generateZipBundleInternal(marriage, globalContext, documentTypes, Boolean.FALSE);
+            return this.generateZipBundleInternal(
+                marriage,
+                globalContext,
+                documentTypes,
+                Boolean.FALSE,
+                userWorkplaceId,
+                alreadyAddedFiles
+            );
         } catch (Exception e) {
             throw new BusinessErrorException(HttpStatus.UNPROCESSABLE_ENTITY, "Failed to generate document");
         }
@@ -225,7 +545,8 @@ public class DocumentServiceImpl implements DocumentService {
             bride.getSubDistrictName(),
             bride.getDistrictName(),
             bride.getCityName(),
-            bride.getProvinceName()
+            bride.getProvinceName(),
+            bride.getZipCode()
         );
 
         var brideBrithInfo = CommonUtil.buildBirthInfo(bride.getBirthPlace(), bride.getBirthDate());
@@ -268,7 +589,8 @@ public class DocumentServiceImpl implements DocumentService {
             groom.getSubDistrictName(),
             groom.getDistrictName(),
             groom.getCityName(),
-            groom.getProvinceName()
+            groom.getProvinceName(),
+            groom.getZipCode()
         );
 
         var groomBrithInfo = CommonUtil.buildBirthInfo(groom.getBirthPlace(), groom.getBirthDate());
@@ -312,7 +634,8 @@ public class DocumentServiceImpl implements DocumentService {
             brideFather.getSubDistrictName(),
             brideFather.getDistrictName(),
             brideFather.getCityName(),
-            brideFather.getProvinceName()
+            brideFather.getProvinceName(),
+            brideFather.getZipCode()
         );
 
         var brideFatherBrithInfo = CommonUtil.buildBirthInfo(brideFather.getBirthPlace(), brideFather.getBirthDate());
@@ -344,7 +667,8 @@ public class DocumentServiceImpl implements DocumentService {
             brideMother.getSubDistrictName(),
             brideMother.getDistrictName(),
             brideMother.getCityName(),
-            brideMother.getProvinceName()
+            brideMother.getProvinceName(),
+            brideMother.getZipCode()
         );
 
         var brideMotherBrithInfo = CommonUtil.buildBirthInfo(brideMother.getBirthPlace(), brideMother.getBirthDate());
@@ -376,7 +700,8 @@ public class DocumentServiceImpl implements DocumentService {
             groomFather.getSubDistrictName(),
             groomFather.getDistrictName(),
             groomFather.getCityName(),
-            groomFather.getProvinceName()
+            groomFather.getProvinceName(),
+            groomFather.getZipCode()
         );
 
         var groomFatherBrithInfo = CommonUtil.buildBirthInfo(groomFather.getBirthPlace(), groomFather.getBirthDate());
@@ -408,7 +733,8 @@ public class DocumentServiceImpl implements DocumentService {
             groomMother.getSubDistrictName(),
             groomMother.getDistrictName(),
             groomMother.getCityName(),
-            groomMother.getProvinceName()
+            groomMother.getProvinceName(),
+            groomMother.getZipCode()
         );
 
         var groomMotherBrithInfo = CommonUtil.buildBirthInfo(groomMother.getBirthPlace(), groomMother.getBirthDate());
@@ -436,7 +762,8 @@ public class DocumentServiceImpl implements DocumentService {
             marriage.getSubDistrictName(),
             marriage.getDistrictName(),
             marriage.getCityName(),
-            marriage.getProvinceName()
+            marriage.getProvinceName(),
+            marriage.getZipCode()
         );
 
         marriageDataDto.setDate(CommonUtil.normalizeDateTime(marriage.getDatetime()));
@@ -460,7 +787,8 @@ public class DocumentServiceImpl implements DocumentService {
             guardian.getSubDistrictName(),
             guardian.getDistrictName(),
             guardian.getCityName(),
-            guardian.getProvinceName()
+            guardian.getProvinceName(),
+            guardian.getZipCode()
         );
 
         var guardianBrithInfo = CommonUtil.buildBirthInfo(guardian.getBirthPlace(), guardian.getBirthDate());
@@ -502,7 +830,8 @@ public class DocumentServiceImpl implements DocumentService {
             bridePreviousPartner.getSubDistrictName(),
             bridePreviousPartner.getDistrictName(),
             bridePreviousPartner.getCityName(),
-            bridePreviousPartner.getProvinceName()
+            bridePreviousPartner.getProvinceName(),
+            bridePreviousPartner.getZipCode()
         );
 
         var bridePreviousPartnerBrithInfo = CommonUtil.buildBirthInfo(bridePreviousPartner.getBirthPlace(), bridePreviousPartner.getBirthDate());
@@ -543,7 +872,8 @@ public class DocumentServiceImpl implements DocumentService {
             groomPreviousPartner.getSubDistrictName(),
             groomPreviousPartner.getDistrictName(),
             groomPreviousPartner.getCityName(),
-            groomPreviousPartner.getProvinceName()
+            groomPreviousPartner.getProvinceName(),
+            groomPreviousPartner.getZipCode()
         );
 
         var groomPreviousPartnerBrithInfo = CommonUtil.buildBirthInfo(groomPreviousPartner.getBirthPlace(), groomPreviousPartner.getBirthDate());
@@ -583,7 +913,15 @@ public class DocumentServiceImpl implements DocumentService {
         var documentConfig = this.findByWorkplaceIdAndServiceType(data.getCode(), DocumentConstant.ServiceType.MARRIAGE);
         var villageHeadName = documentConfig != null ? documentConfig.getHeadName() : "";
         var villageInfo = documentConfig != null ? documentConfig.getWorkplace().getName() : "";
-        var generatedNumber = this.generateNextDocumentNumber(documentConfig);
+        UUID configId = documentConfig != null ? documentConfig.getId() : null;
+
+        // Since data use the same number for all documents, we use N1 to check existing number
+        String existingNumber = this.findExistingDocumentNumberByApplication(
+            marriage.getApplication().getId(),
+            DocumentConstant.DocumentType.N1_GROOM,
+            configId
+        );
+        String generatedNumber = StringUtils.hasText(existingNumber) ? existingNumber : this.generateNextDocumentNumber(documentConfig);
 
         groomDocumentDataDto.setDocumentNumber(generatedNumber);
         groomDocumentDataDto.setSubDistrictName(groom.getSubDistrictName());
@@ -615,11 +953,18 @@ public class DocumentServiceImpl implements DocumentService {
             data = Master.builder().code(bride.getSubDistrictCode()).name(bride.getSubDistrictName()).build();
         }
 
-        var config = this.findByWorkplaceIdAndServiceType(data.getCode(), DocumentConstant.ServiceType.MARRIAGE);
-        var villageHeadName = config != null ? config.getHeadName() : "";
-        var villageInfo = config != null ? config.getWorkplace().getName() : "";
+        var documentConfig = this.findByWorkplaceIdAndServiceType(data.getCode(), DocumentConstant.ServiceType.MARRIAGE);
+        var villageHeadName = documentConfig != null ? documentConfig.getHeadName() : "";
+        var villageInfo = documentConfig != null ? documentConfig.getWorkplace().getName() : "";
+        var configId = documentConfig != null ? documentConfig.getId() : null;
 
-        var generatedNumber = this.generateNextDocumentNumber(config);
+        // Since data use the same number for all documents, we use N1 to check existing number
+        String existingNumber = this.findExistingDocumentNumberByApplication(
+            marriage.getApplication().getId(),
+            DocumentConstant.DocumentType.N1_BRIDE,
+            configId
+        );
+        String generatedNumber = StringUtils.hasText(existingNumber) ? existingNumber : this.generateNextDocumentNumber(documentConfig);
 
         brideDocumentDataDto.setDocumentNumber(generatedNumber);
         brideDocumentDataDto.setSubDistrictName(bride.getSubDistrictName());
@@ -650,7 +995,8 @@ public class DocumentServiceImpl implements DocumentService {
                     DocumentConstant.DocumentType.N2_BRIDE,
                     DocumentConstant.DocumentType.N4_BRIDE,
                     DocumentConstant.DocumentType.N5_BRIDE,
-                    DocumentConstant.DocumentType.WN
+                    DocumentConstant.DocumentType.WN,
+                    DocumentConstant.DocumentType.UPDATE_HISTORY
                 )
             );
 
@@ -666,15 +1012,16 @@ public class DocumentServiceImpl implements DocumentService {
                 DocumentConstant.DocumentType.N1_GROOM,
                 DocumentConstant.DocumentType.N2_GROOM,
                 DocumentConstant.DocumentType.N4_GROOM,
-                DocumentConstant.DocumentType.N5_GROOM
+                DocumentConstant.DocumentType.N5_GROOM,
+                DocumentConstant.DocumentType.UPDATE_HISTORY
             )
         );
 
         return documentTypes;
     }
 
-    private DocumentTemplate findTemplateByType(DocumentConstant.DocumentType documentType) {
-        return this.documentTemplateRepository.findByDocumentTypeAndDeletedFalse(documentType).orElse(null);
+    private DocumentTemplate findTemplateByType(DocumentConstant.DocumentType documentType, UUID configId) {
+        return this.documentTemplateRepository.findByDocumentTypeAndConfig_IdAndDeletedFalse(documentType, configId).orElse(null);
     }
 
     private GeneratedDocument save(GeneratedDocument generatedDocument) {
@@ -686,11 +1033,21 @@ public class DocumentServiceImpl implements DocumentService {
         Marriage marriage,
         MarriageDocumentDto globalContext,
         List<DocumentConstant.DocumentType> documentTypesToProcess,
-        Boolean isBride
+        Boolean isBride,
+        String userWorkplaceId,
+        Set<String> alreadyAddedFiles
     ) throws IOException {
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         try (ZipOutputStream zos = new ZipOutputStream(byteArrayOutputStream)) {
-            this.generateAndAddDocumentsToZip(zos, marriage, globalContext, documentTypesToProcess, isBride);
+            this.generateAndAddDocumentsToZip(
+                zos,
+                marriage,
+                globalContext,
+                documentTypesToProcess,
+                isBride,
+                userWorkplaceId,
+                alreadyAddedFiles
+            );
         }
 
         return byteArrayOutputStream.toByteArray();
@@ -702,20 +1059,28 @@ public class DocumentServiceImpl implements DocumentService {
         Marriage marriage,
         MarriageDocumentDto globalContext,
         List<DocumentConstant.DocumentType> documentTypesToProcess,
-        Boolean isBride
+        Boolean isBride,
+        String userWorkplaceId,
+        Set<String> alreadyAddedFiles
     ) throws IOException {
+
+        if (globalContext.getHistories().isEmpty()) {
+            documentTypesToProcess.remove(DocumentConstant.DocumentType.UPDATE_HISTORY);
+        }
+
+        DocumentConfig config = this.findByWorkplaceIdAndServiceType(userWorkplaceId, DocumentConstant.ServiceType.MARRIAGE);
+        if (config == null || config.isDeleted()) {
+            throw new BusinessErrorException(HttpStatus.INTERNAL_SERVER_ERROR, "Konfigurasi dokumen tidak ditemukan untuk tempat kerja: " + userWorkplaceId);
+        }
+
+        var configId = config.getId();
 
         for (DocumentConstant.DocumentType docType : documentTypesToProcess) {
             log.info("Membuat tipe dokumen: {} untuk aplikasi {}", docType, marriage.getApplication().getId());
 
-            var template = this.findTemplateByType(docType);
+            var template = this.findTemplateByType(docType, configId);
             if (template == null) {
                 throw new BusinessErrorException(HttpStatus.INTERNAL_SERVER_ERROR, "Template tidak ditemukan untuk tipe dokumen: " + docType);
-            }
-
-            DocumentConfig config = template.getConfig();
-            if (config == null || config.isDeleted()) {
-                throw new BusinessErrorException(HttpStatus.INTERNAL_SERVER_ERROR, "Konfigurasi aktif tidak ditemukan untuk template: " + template.getName());
             }
 
             Context thymeleafContext = new Context();
@@ -724,7 +1089,12 @@ public class DocumentServiceImpl implements DocumentService {
             byte[] pdfBytes = generatePdfFromTemplate(template.getFilePath(), thymeleafContext);
 
             String pdfFileName = generatePdfFilename(docType, marriage);
+            if (alreadyAddedFiles.contains(pdfFileName)) {
+                log.warn("File {} sudah ada di ZIP, skip duplikasi.", pdfFileName);
+                continue;
+            }
             addFileToZip(zos, pdfFileName, pdfBytes);
+            alreadyAddedFiles.add(pdfFileName);
             String documentNumber = null;
 
             if (isBride) {
@@ -746,8 +1116,8 @@ public class DocumentServiceImpl implements DocumentService {
 
     private String generatePdfFilename(DocumentConstant.DocumentType docType, Marriage marriage) {
         String applicationNumber = "unknown";
-        if (marriage.getApplication() != null && marriage.getApplication().getApplicationNumber() != null) {
-            applicationNumber = marriage.getApplication().getApplicationNumber();
+        if (marriage.getApplication() != null && marriage.getApplication().getId() != null) {
+            applicationNumber = CommonUtil.simplifyUUID(marriage.getApplication().getId());
         }
 
         var docName = docType.name() + "_app-" + applicationNumber + ".pdf";
@@ -764,20 +1134,24 @@ public class DocumentServiceImpl implements DocumentService {
         LocalDate issueDate
     ) {
         try {
+            GeneratedDocument generatedDoc = generatedDocumentRepository
+                .findByApplicationIdAndDocumentTemplateIdAndDeletedFalse(application.getId(), template.getId())
+                .stream()
+                .findFirst()
+                .orElse(new GeneratedDocument());
+
             String dataSnapshotJson = this.objectMapper.writeValueAsString(dataUsed);
 
-            GeneratedDocument generatedDoc = GeneratedDocument
-                .builder()
-                .application(application)
-                .documentTemplate(template)
-                .documentNumber(documentNumber)
-                .filePath(generatedFilePath)
-                .dataSnapshot(dataSnapshotJson)
-                .issuedAt(issueDate.atStartOfDay())
-                .build();
+            generatedDoc.setApplication(application);
+            generatedDoc.setDocumentTemplate(template);
+            generatedDoc.setDocumentNumber(documentNumber);
+            generatedDoc.setFilePath(generatedFilePath);
+            generatedDoc.setDataSnapshot(dataSnapshotJson);
+            generatedDoc.setIssuedAt(issueDate.atStartOfDay());
 
-            this.save(generatedDoc);
-            log.info("Saved metadata for generated document: {}", documentNumber);
+            this.generatedDocumentRepository.save(generatedDoc);
+
+            log.info("Saved/Updated metadata for generated document: {}", documentNumber);
         } catch (Exception e) {
             log.error("Failed to save metadata for generated document {}: {}", documentNumber, e.getMessage(), e);
         }
@@ -834,5 +1208,22 @@ public class DocumentServiceImpl implements DocumentService {
             log.error("Error converting HTML to PDF for template {}: {}", templatePath, e.getMessage());
             throw new IOException("PDF generation failed for template: " + templatePath, e);
         }
+    }
+
+    private String findExistingDocumentNumberByApplication(UUID applicationId, DocumentConstant.DocumentType docType, UUID configId) {
+        DocumentTemplate template = this.findTemplateByType(docType, configId);
+        if (template == null) return null;
+
+        return this.generatedDocumentRepository.findByApplicationIdAndDocumentTemplateIdAndDeletedFalse(applicationId, template.getId())
+            .map(GeneratedDocument::getDocumentNumber)
+            .orElse(null);
+    }
+
+    private DocumentTemplate findTemplateByContext(
+        DocumentConstant.DocumentType documentType,
+        DocumentConstant.ServiceType serviceType,
+        String workplaceCode
+    ) {
+        return this.documentTemplateRepository.findTemplateByContext(documentType, serviceType, workplaceCode).orElse(null);
     }
 }

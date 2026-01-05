@@ -42,17 +42,8 @@ public class PreviousPartnerUpdateRequest {
     @JsonProperty("death_date")
     private LocalDate deathDate;
 
-    @JsonProperty("gender")
-    private MarriageConstant.Gender gender;
-
-    @JsonProperty("job")
-    private String job;
-
-    @JsonProperty("nationality")
-    private String nationality;
-
-    @JsonProperty("religion")
-    private MarriageConstant.Religion religion;
+    @JsonProperty("father_name")
+    private String fatherName;
 
     @JsonProperty("province_code")
     private String provinceCode;

@@ -12,6 +12,7 @@ import org.mapstruct.*;
 @MapperConfig
 public interface GuardianMapper {
 
+    @Mapping(target = "relationship", source = "relationship", defaultValue = "FATHER")
     Guardian convert(GuardianCreateRequest source);
 
     GuardianResponse convert(Guardian source);

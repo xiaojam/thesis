@@ -41,6 +41,6 @@ public class BaseEntity implements Serializable {
     @Column
     private ZonedDateTime updatedAt;
 
-    @Column(insertable = false)
+    @Column
     private String updatedBy;
 }

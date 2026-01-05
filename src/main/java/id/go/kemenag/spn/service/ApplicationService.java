@@ -34,4 +34,6 @@ public interface ApplicationService {
         AuthConstant.Role handlerRole,
         String handlerWorkplaceCode
     );
+
+    Boolean findByBrideAndGroomIdentityId(String identityId, String identityId1, ApplicationConstant.Type type);
 }

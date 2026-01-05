@@ -16,4 +16,6 @@ public interface UserService {
     Boolean checkUsernameAvailability(String username);
 
     UserDetail findByWorkplaceCodeAndRole(String workplaceCode, AuthConstant.Role role);
+
+    UserDetail findByUsername(String username);
 }

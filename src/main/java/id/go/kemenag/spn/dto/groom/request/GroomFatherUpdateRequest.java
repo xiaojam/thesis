@@ -30,23 +30,14 @@ public class GroomFatherUpdateRequest {
     @Size(min = 16, max = 16)
     private String identityId;
 
+    @JsonProperty("father_name")
+    private String fatherName;
+
     @JsonProperty("birth_place")
     private String birthPlace;
 
     @JsonProperty("birth_date")
     private LocalDate birthDate;
-
-    @JsonProperty("job")
-    private String job;
-
-    @JsonProperty("nationality")
-    private String nationality;
-
-    @JsonProperty("religion")
-    private MarriageConstant.Religion religion;
-
-    @JsonProperty("deceased")
-    private boolean deceased;
 
     @JsonProperty("province_code")
     private String provinceCode;

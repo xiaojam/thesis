@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="id" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <title>Riwayat Perubahan Data</title>
+    <style>
+        @page { size: A4; margin: 2cm }
+        body { font-family: 'Times New Roman', serif; font-size: 10pt; line-height: 1.5; }
+        .title { text-align: center; font-weight: bold; font-size: 12pt; margin-bottom: 20px; text-transform: uppercase; }
+
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th { background-color: #f2f2f2; text-align: center; font-weight: bold; }
+        th, td { border: 1px solid black; padding: 8px; vertical-align: top; }
+
+        .date-col { width: 25%; text-align: left; }
+        .desc-col { width: 50%; text-align: justify; }
+        .actor-col { width: 25%; text-align: left; }
+
+        .highlight { font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div class="title">
+    RIWAYAT PERUBAHAN DATA
+</div>
+
+<table>
+    <thead>
+    <tr>
+        <th class="date-col">TANGGAL</th>
+        <th class="desc-col">KETERANGAN</th>
+        <th class="actor-col">AKTOR</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="history : ${ctx.histories}">
+        <td class="date-col" th:text="${history.time}">Minggu, 2 Januari 2020 pukul 09:00 WIB</td>
+        <td class="desc-col">
+            Telah dilakukan perubahan data
+            <span class="highlight" th:text="${#strings.isEmpty(history.label) ? '-' : history.label}">Label</span>
+            dari
+            <span class="highlight" th:text="${#strings.isEmpty(history.oldValue) ? '-' : history.oldValue}">Lama</span>
+            menjadi
+            <span class="highlight" th:text="${#strings.isEmpty(history.newValue) ? '-' : history.newValue}">Baru</span>.
+        </td>
+        <td class="actor-col" th:text="${history.handler}">Nama Pengurus</td>
+    </tr>
+    </tbody>
+</table>
+
+<div style="margin-top: 30px; font-size: 9pt;">
+    <p>* Dokumen ini dicetak otomatis oleh sistem sebagai bukti autentik perubahan data.</p>
+</div>
+
+</body>
+</html>

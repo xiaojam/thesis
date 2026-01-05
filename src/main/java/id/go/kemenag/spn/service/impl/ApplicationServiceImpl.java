@@ -107,4 +107,9 @@ public class ApplicationServiceImpl implements ApplicationService {
     ) {
         return this.applicationRepository.findOneByHandler(id, handlerRole, handlerWorkplaceCode).orElse(null);
     }
+
+    @Override
+    public Boolean findByBrideAndGroomIdentityId(String brideIdentityId, String groomIdentityId, ApplicationConstant.Type type) {
+        return this.applicationRepository.findApplicationByBrideAndGroomIdentityId(brideIdentityId, groomIdentityId, type).isPresent();
+    }
 }

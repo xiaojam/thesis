@@ -48,6 +48,13 @@ public class Plaintiff extends BaseEntity {
     private DivorceConstant.Religion religion;
 
     @Column
+    @Enumerated(EnumType.STRING)
+    private DivorceConstant.Gender gender;
+
+    @Column
+    private String fatherName;
+
+    @Column
     private String nationality;
 
     @Column
@@ -66,6 +73,9 @@ public class Plaintiff extends BaseEntity {
 
     @Column
     private String job;
+
+    @Column
+    private Double salary;
 
     @Column
     private String phoneNumber;

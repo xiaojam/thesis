@@ -13,6 +13,7 @@ CREATE TABLE defendant (
     marital_status TEXT,
     education TEXT,
     job TEXT,
+    salary DOUBLE PRECISION,
     phone_number TEXT,
     province_code TEXT,
     province_name TEXT,

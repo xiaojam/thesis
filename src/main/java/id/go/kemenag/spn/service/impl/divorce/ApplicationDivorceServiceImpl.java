@@ -6,6 +6,7 @@ import id.go.kemenag.spn.dto.application.request.ApplicationDivorceDoneRequest;
 import id.go.kemenag.spn.dto.application.response.ApplicationCreateResponse;
 import id.go.kemenag.spn.dto.application.response.ApplicationDivorceDoneResponse;
 import id.go.kemenag.spn.dto.application.response.ApplicationDivorceResponse;
+import id.go.kemenag.spn.dto.application.response.ApplicationDivorceStatusResponse;
 import id.go.kemenag.spn.dto.camunda.request.CamundaCompleteUserTaskRequest;
 import id.go.kemenag.spn.dto.caseschedule.response.CaseScheduleResponse;
 import id.go.kemenag.spn.dto.child.response.ChildClaimResponse;
@@ -14,10 +15,7 @@ import id.go.kemenag.spn.entity.Application;
 import id.go.kemenag.spn.entity.divorce.*;
 import id.go.kemenag.spn.exception.BusinessErrorException;
 import id.go.kemenag.spn.mapper.*;
-import id.go.kemenag.spn.service.ApplicationHandlerService;
-import id.go.kemenag.spn.service.ApplicationService;
-import id.go.kemenag.spn.service.AuthService;
-import id.go.kemenag.spn.service.CamundaService;
+import id.go.kemenag.spn.service.*;
 import id.go.kemenag.spn.service.divorce.*;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
@@ -93,6 +91,9 @@ public class ApplicationDivorceServiceImpl implements ApplicationDivorceService 
     @Autowired
     private CaseScheduleService caseScheduleService;
 
+    @Autowired
+    private DocumentService documentService;
+
     @Override
     public ApplicationCreateResponse createDivorce(ApplicationDivorceCreateRequest request) {
         var appplication = Application
@@ -129,6 +130,11 @@ public class ApplicationDivorceServiceImpl implements ApplicationDivorceService 
             .defendant(defendant)
             .plaintiff(plaintiff)
             .marriageData(marriageData)
+            .reconciliationAttemptDescription(request.getReconciliationAttemptDescription())
+            .iddahSupportAmount(request.getIddahSupportAmount())
+            .mutahDescription(request.getMutahDescription())
+            .maddiyahSupportAmount(request.getMaddiyahSupportAmount())
+            .maddiyahDurationInMonths(request.getMaddiyahDurationInMonths())
             .build();
 
         divorceCase = this.divorceService.save(divorceCase);
@@ -298,7 +304,7 @@ public class ApplicationDivorceServiceImpl implements ApplicationDivorceService 
                 break;
 
             default:
-                resultMap.put(WorkflowConstant.COUNCIL_DROPPED_VARIABLE, !request.getIsPlaintiffPresent());
+                resultMap.put(WorkflowConstant.COUNCIL_DROPPED_VARIABLE, request.getIsDropped());
                 break;
         }
 
@@ -318,6 +324,42 @@ public class ApplicationDivorceServiceImpl implements ApplicationDivorceService 
         return ApplicationDivorceDoneResponse
             .builder()
             .applicationId(request.getApplicationId())
+            .build();
+    }
+
+    @Override
+    public byte[] downloadDivorceDocument(String applicationNumber) {
+        var divorceCase = this.divorceService.findByCaseNumber(applicationNumber);
+        if (divorceCase == null) {
+            throw new BusinessErrorException(HttpStatus.NOT_FOUND, "Divorce case not found");
+        }
+
+        return this.documentService.downloadDivorceDocument(divorceCase);
+    }
+
+    @Override
+    public ApplicationDivorceStatusResponse checkDivorceStatus(String applicationNumber) {
+        var divorceCase = this.divorceService.findByCaseNumber(applicationNumber);
+        if (divorceCase == null) {
+            throw new BusinessErrorException(HttpStatus.NOT_FOUND, "Divorce case not found");
+        }
+
+        var schedules = divorceCase.getSchedules();
+        var lastSchedule = schedules.stream()
+            .max(Comparator.comparing(CaseSchedule::getProcessStep))
+            .orElse(null);
+
+        if (lastSchedule == null) {
+            throw new BusinessErrorException(HttpStatus.NOT_FOUND, "No schedule found for the divorce case.");
+        }
+
+        return ApplicationDivorceStatusResponse
+            .builder()
+            .status(lastSchedule.getStatus())
+            .dateType(lastSchedule.getDateType())
+            .eventDate(lastSchedule.getEventDate())
+            .processStep(lastSchedule.getProcessStep())
+            .dailyQueueNumber(lastSchedule.getDailyQueueNumber())
             .build();
     }
 
@@ -356,6 +398,7 @@ public class ApplicationDivorceServiceImpl implements ApplicationDivorceService 
         var childClaim = ChildClaim
             .builder()
             .divorceCase(divorceCase)
+            .claimed(request.getChildClaim().getClaimed())
             .custodyRequest(request.getChildClaim().getCustodyRequest())
             .monthlySupport(request.getChildClaim().getMonthlySupport())
             .children(new ArrayList<>())
@@ -477,6 +520,11 @@ public class ApplicationDivorceServiceImpl implements ApplicationDivorceService 
             .childClaim(childClaim)
             .propertyClaim(propertyClaim)
             .schedules(schedules)
+            .reconciliationAttemptDescription(divorceCase.getReconciliationAttemptDescription())
+            .iddahSupportAmount(divorceCase.getIddahSupportAmount())
+            .mutahDescription(divorceCase.getMutahDescription())
+            .maddiyahSupportAmount(divorceCase.getMaddiyahSupportAmount())
+            .maddiyahDurationInMonths(divorceCase.getMaddiyahDurationInMonths())
             .build();
     }
 }

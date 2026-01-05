@@ -10,6 +10,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -52,4 +53,15 @@ public class DivorceController {
         return this.applicationDivorceService.doneApplication(request);
     }
 
+    @GetMapping("/download/document/{applicationNumber}")
+    @ResponseStatus(HttpStatus.OK)
+    @PreAuthorize("@apiKeyChecker.isValid()")
+    @Operation(summary = "download", description = "download divorce document")
+    ResponseEntity<byte[]> downloadDivorceDocument(@PathVariable String applicationNumber) {
+        byte[] document = this.applicationDivorceService.downloadDivorceDocument(applicationNumber);
+        return ResponseEntity
+            .ok()
+            .header("Content-Disposition", "attachment; filename=divorce_document_" + applicationNumber + ".pdf")
+            .body(document);
+    }
 }

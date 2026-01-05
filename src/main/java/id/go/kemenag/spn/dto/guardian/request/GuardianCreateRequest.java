@@ -93,4 +93,7 @@ public class GuardianCreateRequest {
 
     @JsonProperty("zip_code")
     private String zipCode;
+
+    @JsonProperty("relationship")
+    private MarriageConstant.GuardianType relationship;
 }

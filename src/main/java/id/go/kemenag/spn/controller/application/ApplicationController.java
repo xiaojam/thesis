@@ -3,6 +3,7 @@ package id.go.kemenag.spn.controller.application;
 import id.go.kemenag.spn.dto.application.request.ApplicationDivorceCreateRequest;
 import id.go.kemenag.spn.dto.application.request.ApplicationMarriageCreateRequest;
 import id.go.kemenag.spn.dto.application.request.ApplicationMarriageRequest;
+import id.go.kemenag.spn.dto.application.response.ApplicationDivorceStatusResponse;
 import id.go.kemenag.spn.dto.application.response.ApplicationMarriageStatusResponse;
 import id.go.kemenag.spn.dto.application.response.ApplicationCreateResponse;
 import id.go.kemenag.spn.service.divorce.ApplicationDivorceService;
@@ -55,5 +56,13 @@ public class ApplicationController {
     @Operation(summary = "get", description = "get application status by id")
     ApplicationMarriageStatusResponse checkMarriageStatus(@RequestBody @Valid ApplicationMarriageRequest request) {
         return this.applicationMarriageService.checkMarriageStatus(request);
+    }
+
+    @GetMapping(value = "/divorce/{applicationNumber}/status", produces = "application/json")
+    @ResponseStatus(HttpStatus.OK)
+    @PreAuthorize("@apiKeyChecker.isValid()")
+    @Operation(summary = "get", description = "get application status by id")
+    ApplicationDivorceStatusResponse checkDivorceStatus(@PathVariable String applicationNumber) {
+        return this.applicationDivorceService.checkDivorceStatus(applicationNumber);
     }
 }

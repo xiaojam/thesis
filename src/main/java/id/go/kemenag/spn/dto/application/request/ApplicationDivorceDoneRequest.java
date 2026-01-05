@@ -29,4 +29,8 @@ public class ApplicationDivorceDoneRequest {
 
     @JsonProperty("is_reconciliation_success")
     private Boolean isReconciliationSuccess;
+
+    @JsonProperty("is_dropped")
+    @Builder.Default
+    private Boolean isDropped = false;
 }

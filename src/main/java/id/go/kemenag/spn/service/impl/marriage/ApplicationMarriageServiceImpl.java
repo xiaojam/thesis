@@ -3,10 +3,20 @@ package id.go.kemenag.spn.service.impl.marriage;
 import id.go.kemenag.spn.constant.*;
 import id.go.kemenag.spn.dto.application.request.*;
 import id.go.kemenag.spn.dto.application.response.*;
+import id.go.kemenag.spn.dto.bride.request.BrideFatherUpdateRequest;
+import id.go.kemenag.spn.dto.bride.request.BrideMotherUpdateRequest;
+import id.go.kemenag.spn.dto.bride.request.BrideUpdateRequest;
 import id.go.kemenag.spn.dto.camunda.request.CamundaCompleteUserTaskRequest;
+import id.go.kemenag.spn.dto.groom.request.GroomFatherUpdateRequest;
+import id.go.kemenag.spn.dto.groom.request.GroomMotherUpdateRequest;
+import id.go.kemenag.spn.dto.groom.request.GroomUpdateRequest;
+import id.go.kemenag.spn.dto.guardian.request.GuardianUpdateRequest;
 import id.go.kemenag.spn.dto.marriage.request.MarriageCreateRequest;
+import id.go.kemenag.spn.dto.marriage.request.MarriageUpdateRequest;
 import id.go.kemenag.spn.dto.previouspartner.request.PreviousPartnerCreateRequest;
+import id.go.kemenag.spn.dto.previouspartner.request.PreviousPartnerUpdateRequest;
 import id.go.kemenag.spn.entity.Application;
+import id.go.kemenag.spn.entity.UpdateHistory;
 import id.go.kemenag.spn.entity.marriage.*;
 import id.go.kemenag.spn.exception.BusinessErrorException;
 import id.go.kemenag.spn.exception.BusinessErrorsException;
@@ -17,6 +27,8 @@ import id.go.kemenag.spn.service.marriage.BrideService;
 import id.go.kemenag.spn.service.marriage.GroomService;
 import id.go.kemenag.spn.service.marriage.MarriageService;
 import id.go.kemenag.spn.service.master.MasterService;
+import id.go.kemenag.spn.util.CommonUtil;
+import jakarta.validation.constraints.NotNull;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -86,8 +98,25 @@ public class ApplicationMarriageServiceImpl implements ApplicationMarriageServic
     @Autowired
     private MasterService masterService;
 
+    @Autowired
+    private UpdateHistoryService updateHistoryService;
+
+    @Autowired
+    private UserService userService;
+
     @Override
     public ApplicationCreateResponse createMarriage(ApplicationMarriageCreateRequest request) {
+        var checkApplicationExist = this.applicationService
+            .findByBrideAndGroomIdentityId(
+                request.getBride().getIdentityId(),
+                request.getGroom().getIdentityId(),
+                ApplicationConstant.Type.MARRIAGE
+            );
+
+        if (checkApplicationExist) {
+            throw new BusinessErrorException(HttpStatus.BAD_REQUEST, "Pengajuan pernikahan dengan data pengantin tersebut sudah ada dalam sistem.");
+        }
+
         var application = Application
             .builder()
             .type(ApplicationConstant.Type.MARRIAGE)
@@ -110,10 +139,13 @@ public class ApplicationMarriageServiceImpl implements ApplicationMarriageServic
         var groom = this.processGroom(application, request, groomFather, groomMother, previousGroomPartner);
         var marriage = this.processMarriage(request.getMarriage(), application, bride, groom);
 
+        var isMuslim = MarriageConstant.Religion.ISLAM.equals(bride.getReligion())
+            && MarriageConstant.Religion.ISLAM.equals(groom.getReligion());
+
         var processId = this.camundaService.invokeMarriageProcess(
             cancelled,
             marriage,
-            request.getGroom().getReligion().equals(request.getBride().getReligion())
+            isMuslim
         );
         application.setProcessId(processId);
         application = this.applicationService.save(application);
@@ -340,7 +372,37 @@ public class ApplicationMarriageServiceImpl implements ApplicationMarriageServic
             throw new BusinessErrorException(HttpStatus.NOT_FOUND, "Application not found");
         }
 
-        this.applicationHandlerService.validateHandler(applicationId);
+        var user = this.authService.getCurrentUser();
+        var userFullName = user.getUsername();
+        var userDetails = this.userService.findByUsername(userFullName);
+        if (userDetails != null) {
+            userFullName = CommonUtil.buildFullName(
+                userDetails.getFirstName(), userDetails.getLastName(), null
+            );
+        }
+
+        List<UpdateHistory> updateHistories = new ArrayList<>();
+
+        var bride = marriage.getBride();
+        var brideMother = bride.getBrideMother();
+        var brideFather = bride.getBrideFather();
+        var groom = marriage.getGroom();
+        var groomMother = groom.getGroomMother();
+        var groomFather = groom.getGroomFather();
+        var guardian = bride.getGuardian();
+        var previousGroomPartner = groom.getPreviousPartner();
+        var previousBridePartner = bride.getPreviousPartner();
+
+        this.updateGroomFather(applicationId, request.getGroomFather(), groomFather, updateHistories, userFullName);
+        this.updateGroomMother(applicationId, request.getGroomMother(), groomMother, updateHistories, userFullName);
+        this.updateBrideFather(applicationId, request.getBrideFather(), brideFather, updateHistories, userFullName);
+        this.updateBrideMother(applicationId, request.getBrideMother(), brideMother, updateHistories, userFullName);
+        this.updateGuardian(applicationId, request.getGuardian(), guardian, updateHistories, userFullName);
+        this.updatePreviousPartner(applicationId, request.getPreviousGroomPartner(), previousGroomPartner, true, updateHistories, userFullName);
+        this.updatePreviousPartner(applicationId, request.getPreviousBridePartner(), previousBridePartner, false, updateHistories, userFullName);
+        this.updateGroom(applicationId, request.getGroom(), groom, updateHistories, userFullName);
+        this.updateBride(applicationId, request.getBride(), bride, updateHistories, userFullName);
+        this.updateMarriage(applicationId, request.getMarriage(), marriage, updateHistories, userFullName);
 
         this.groomFatherMapper.copy(request.getGroomFather(), marriage.getGroom().getGroomFather());
         this.groomMotherMapper.copy(request.getGroomMother(), marriage.getGroom().getGroomMother());
@@ -356,11 +418,884 @@ public class ApplicationMarriageServiceImpl implements ApplicationMarriageServic
         this.marriageMapper.copy(request.getMarriage(), marriage);
 
         this.marriageService.save(marriage);
+        this.updateHistoryService.saveAll(updateHistories);
 
         return ApplicationMarriageUpdateResponse
             .builder()
             .applicationId(applicationId)
             .build();
+    }
+
+    private void updateMarriage(
+        UUID applicationId,
+        MarriageUpdateRequest request,
+        Marriage marriage,
+        List<UpdateHistory> updateHistories,
+        String userFullName
+    ) {
+        if (request == null) return;
+        var oldMarriageDate = marriage.getDatetime() != null
+            ? CommonUtil.normalizeDateTime(marriage.getDatetime())
+            : null;
+        var newMarriageDate = request.getDatetime() != null
+            ? CommonUtil.normalizeDateTime(request.getDatetime())
+            : null;
+        if (!Objects.equals(oldMarriageDate, newMarriageDate)) {
+            var updateHistory = new UpdateHistory();
+            updateHistory.setApplicationId(applicationId);
+            updateHistory.setLabel("marriage_time");
+            updateHistory.setOldValue(oldMarriageDate);
+            updateHistory.setNewValue(newMarriageDate);
+            updateHistory.setUpdatedBy(userFullName);
+            updateHistories.add(updateHistory);
+        }
+
+        var oldMarriagePlace = CommonUtil.buildFullAddress(
+            marriage.getAddress(),
+            marriage.getRt(),
+            marriage.getRw(),
+            marriage.getSubDistrictName(),
+            marriage.getDistrictName(),
+            marriage.getCityName(),
+            marriage.getProvinceName(),
+            marriage.getZipCode()
+        );
+        var newMarriagePlace = CommonUtil.buildFullAddress(
+            request.getAddress(),
+            request.getRt(),
+            request.getRw(),
+            request.getSubDistrictName(),
+            request.getDistrictName(),
+            request.getCityName(),
+            request.getProvinceName(),
+            request.getZipCode()
+        );
+        if (!Objects.equals(oldMarriagePlace, newMarriagePlace)) {
+            var updateHistory = new UpdateHistory();
+            updateHistory.setApplicationId(applicationId);
+            updateHistory.setLabel("marriage_location");
+            updateHistory.setOldValue(oldMarriagePlace);
+            updateHistory.setNewValue(newMarriagePlace);
+            updateHistory.setUpdatedBy(userFullName);
+            updateHistories.add(updateHistory);
+        }
+
+        var oldDowry = marriage.getDowry();
+        var newDowry = request.getDowry();
+        if (!Objects.equals(oldDowry, newDowry)) {
+            var updateHistory = new UpdateHistory();
+            updateHistory.setApplicationId(applicationId);
+            updateHistory.setLabel("marriage_dowry");
+            updateHistory.setOldValue(oldDowry);
+            updateHistory.setNewValue(newDowry);
+            updateHistory.setUpdatedBy(userFullName);
+            updateHistories.add(updateHistory);
+        }
+    }
+
+    private void updateBride(
+        UUID applicationId,
+        BrideUpdateRequest request,
+        Bride bride,
+        List<UpdateHistory> updateHistories,
+        String userFullName
+    ) {
+        if (request == null) return;
+        var oldFullName = CommonUtil.buildFullName(
+            bride.getFirstName(),
+            bride.getLastName(),
+            bride.getAlias()
+        );
+        var newFullName = CommonUtil.buildFullName(
+            request.getFirstName(),
+            request.getLastName(),
+            request.getAlias()
+        );
+        if (!Objects.equals(oldFullName, newFullName)) {
+            var updateHistory = new UpdateHistory();
+            updateHistory.setApplicationId(applicationId);
+            updateHistory.setLabel("bride_full_name");
+            updateHistory.setOldValue(oldFullName);
+            updateHistory.setNewValue(newFullName);
+            updateHistory.setUpdatedBy(userFullName);
+            updateHistories.add(updateHistory);
+        }
+
+        var oldIdentityId = bride.getIdentityId();
+        var newIdentityId = request.getIdentityId();
+        if (!Objects.equals(oldIdentityId, newIdentityId)) {
+            var updateHistory = new UpdateHistory();
+            updateHistory.setApplicationId(applicationId);
+            updateHistory.setLabel("bride_identity_id");
+            updateHistory.setOldValue(oldIdentityId);
+            updateHistory.setNewValue(newIdentityId);
+            updateHistory.setUpdatedBy(userFullName);
+            updateHistories.add(updateHistory);
+        }
+
+        var oldBirthInfo = CommonUtil.buildBirthInfo(
+            bride.getBirthPlace(),
+            bride.getBirthDate()
+        );
+        var newBirthInfo = CommonUtil.buildBirthInfo(
+            request.getBirthPlace(),
+            request.getBirthDate()
+        );
+        if (!Objects.equals(oldBirthInfo, newBirthInfo)) {
+            var updateHistory = new UpdateHistory();
+            updateHistory.setApplicationId(applicationId);
+            updateHistory.setLabel("bride_birth_info");
+            updateHistory.setOldValue(oldBirthInfo);
+            updateHistory.setNewValue(newBirthInfo);
+            updateHistory.setUpdatedBy(userFullName);
+            updateHistories.add(updateHistory);
+        }
+
+        var oldAddress = CommonUtil.buildFullAddress(
+            bride.getAddress(),
+            bride.getRt(),
+            bride.getRw(),
+            bride.getSubDistrictName(),
+            bride.getDistrictName(),
+            bride.getCityName(),
+            bride.getProvinceName(),
+            bride.getZipCode()
+        );
+        var newAddress = CommonUtil.buildFullAddress(
+            request.getAddress(),
+            request.getRt(),
+            request.getRw(),
+            request.getSubDistrictName(),
+            request.getDistrictName(),
+            request.getCityName(),
+            request.getProvinceName(),
+            request.getZipCode()
+        );
+        if (!Objects.equals(oldAddress, newAddress)) {
+            var updateHistory = new UpdateHistory();
+            updateHistory.setApplicationId(applicationId);
+            updateHistory.setLabel("bride_address");
+            updateHistory.setOldValue(oldAddress);
+            updateHistory.setNewValue(newAddress);
+            updateHistory.setUpdatedBy(userFullName);
+            updateHistories.add(updateHistory);
+        }
+    }
+
+    private void updateGroom(
+        UUID applicationId,
+        GroomUpdateRequest request,
+        Groom groom,
+        List<UpdateHistory> updateHistories,
+        String userFullName
+    ) {
+        if (request == null) return;
+        var oldFullName = CommonUtil.buildFullName(
+            groom.getFirstName(),
+            groom.getLastName(),
+            groom.getAlias()
+        );
+        var newFullName = CommonUtil.buildFullName(
+            request.getFirstName(),
+            request.getLastName(),
+            request.getAlias()
+        );
+        if (!Objects.equals(oldFullName, newFullName)) {
+            var updateHistory = new UpdateHistory();
+            updateHistory.setApplicationId(applicationId);
+            updateHistory.setLabel("groom_full_name");
+            updateHistory.setOldValue(oldFullName);
+            updateHistory.setNewValue(newFullName);
+            updateHistory.setUpdatedBy(userFullName);
+            updateHistories.add(updateHistory);
+        }
+
+        var oldIdentityId = groom.getIdentityId();
+        var newIdentityId = request.getIdentityId();
+        if (!Objects.equals(oldIdentityId, newIdentityId)) {
+            var updateHistory = new UpdateHistory();
+            updateHistory.setApplicationId(applicationId);
+            updateHistory.setLabel("groom_identity_id");
+            updateHistory.setOldValue(oldIdentityId);
+            updateHistory.setNewValue(newIdentityId);
+            updateHistory.setUpdatedBy(userFullName);
+            updateHistories.add(updateHistory);
+        }
+
+        var oldBirthInfo = CommonUtil.buildBirthInfo(
+            groom.getBirthPlace(),
+            groom.getBirthDate()
+        );
+        var newBirthInfo = CommonUtil.buildBirthInfo(
+            request.getBirthPlace(),
+            request.getBirthDate()
+        );
+        if (!Objects.equals(oldBirthInfo, newBirthInfo)) {
+            var updateHistory = new UpdateHistory();
+            updateHistory.setApplicationId(applicationId);
+            updateHistory.setLabel("groom_birth_info");
+            updateHistory.setOldValue(oldBirthInfo);
+            updateHistory.setNewValue(newBirthInfo);
+            updateHistory.setUpdatedBy(userFullName);
+            updateHistories.add(updateHistory);
+        }
+
+        var oldAddress = CommonUtil.buildFullAddress(
+            groom.getAddress(),
+            groom.getRt(),
+            groom.getRw(),
+            groom.getSubDistrictName(),
+            groom.getDistrictName(),
+            groom.getCityName(),
+            groom.getProvinceName(),
+            groom.getZipCode()
+        );
+        var newAddress = CommonUtil.buildFullAddress(
+            request.getAddress(),
+            request.getRt(),
+            request.getRw(),
+            request.getSubDistrictName(),
+            request.getDistrictName(),
+            request.getCityName(),
+            request.getProvinceName(),
+            request.getZipCode()
+        );
+        if (!Objects.equals(oldAddress, newAddress)) {
+            var updateHistory = new UpdateHistory();
+            updateHistory.setApplicationId(applicationId);
+            updateHistory.setLabel("groom_address");
+            updateHistory.setOldValue(oldAddress);
+            updateHistory.setNewValue(newAddress);
+            updateHistory.setUpdatedBy(userFullName);
+            updateHistories.add(updateHistory);
+        }
+
+    }
+
+    private void updatePreviousPartner(
+        UUID applicationId,
+        PreviousPartnerUpdateRequest request,
+        PreviousPartner previousPartner,
+        Boolean isGroom,
+        List<UpdateHistory> updateHistories,
+        String userFullName
+    ) {
+        if (request == null) return;
+        var oldFullName = CommonUtil.buildFullName(
+            previousPartner.getFirstName(),
+            previousPartner.getLastName(),
+            previousPartner.getAlias()
+        );
+        var newFullName = CommonUtil.buildFullName(
+            request.getFirstName(),
+            request.getLastName(),
+            request.getAlias()
+        );
+        var labelPrefix = isGroom ? "previous_groom_partner_" : "previous_bride_partner_";
+        if (!Objects.equals(oldFullName, newFullName)) {
+            var updateHistory = new UpdateHistory();
+            updateHistory.setApplicationId(applicationId);
+            updateHistory.setLabel(labelPrefix + "full_name");
+            updateHistory.setOldValue(oldFullName);
+            updateHistory.setNewValue(newFullName);
+            updateHistory.setUpdatedBy(userFullName);
+            updateHistories.add(updateHistory);
+        }
+
+        var oldBirthInfo = CommonUtil.buildBirthInfo(
+            previousPartner.getBirthPlace(),
+            previousPartner.getBirthDate()
+        );
+        var newBirthInfo = CommonUtil.buildBirthInfo(
+            request.getBirthPlace(),
+            request.getBirthDate()
+        );
+        if (!Objects.equals(oldBirthInfo, newBirthInfo)) {
+            var updateHistory = new UpdateHistory();
+            updateHistory.setApplicationId(applicationId);
+            updateHistory.setLabel(labelPrefix + "birth_info");
+            updateHistory.setOldValue(oldBirthInfo);
+            updateHistory.setNewValue(newBirthInfo);
+            updateHistory.setUpdatedBy(userFullName);
+            updateHistories.add(updateHistory);
+        }
+
+        var oldDeathInfo = CommonUtil.buildBirthInfo(
+            previousPartner.getBirthPlace(),
+            previousPartner.getBirthDate()
+        );
+        var newDeathInfo = CommonUtil.buildBirthInfo(
+            request.getBirthPlace(),
+            request.getBirthDate()
+        );
+        if (!Objects.equals(oldDeathInfo, newDeathInfo)) {
+            var updateHistory = new UpdateHistory();
+            updateHistory.setApplicationId(applicationId);
+            updateHistory.setLabel(labelPrefix + "death_info");
+            updateHistory.setOldValue(oldDeathInfo);
+            updateHistory.setNewValue(newDeathInfo);
+            updateHistory.setUpdatedBy(userFullName);
+            updateHistories.add(updateHistory);
+        }
+
+        var oldIdentityId = previousPartner.getIdentityId();
+        var newIdentityId = request.getIdentityId();
+        if (!Objects.equals(oldIdentityId, newIdentityId)) {
+            var updateHistory = new UpdateHistory();
+            updateHistory.setApplicationId(applicationId);
+            updateHistory.setLabel(labelPrefix + "identity_id");
+            updateHistory.setOldValue(oldIdentityId);
+            updateHistory.setNewValue(newIdentityId);
+            updateHistory.setUpdatedBy(userFullName);
+            updateHistories.add(updateHistory);
+        }
+
+        var oldFatherName = previousPartner.getFatherName();
+        var newFatherName = request.getFatherName();
+        if (!Objects.equals(oldFatherName, newFatherName)) {
+            var updateHistory = new UpdateHistory();
+            updateHistory.setApplicationId(applicationId);
+            updateHistory.setLabel(labelPrefix + "father_name");
+            updateHistory.setOldValue(oldFatherName);
+            updateHistory.setNewValue(newFatherName);
+            updateHistory.setUpdatedBy(userFullName);
+            updateHistories.add(updateHistory);
+        }
+
+        var oldAddress = CommonUtil.buildFullAddress(
+            previousPartner.getAddress(),
+            previousPartner.getRt(),
+            previousPartner.getRw(),
+            previousPartner.getSubDistrictName(),
+            previousPartner.getDistrictName(),
+            previousPartner.getCityName(),
+            previousPartner.getProvinceName(),
+            previousPartner.getZipCode()
+        );
+        var newAddress = CommonUtil.buildFullAddress(
+            request.getAddress(),
+            request.getRt(),
+            request.getRw(),
+            request.getSubDistrictName(),
+            request.getDistrictName(),
+            request.getCityName(),
+            request.getProvinceName(),
+            request.getZipCode()
+        );
+        if (!Objects.equals(oldAddress, newAddress)) {
+            var updateHistory = new UpdateHistory();
+            updateHistory.setApplicationId(applicationId);
+            updateHistory.setLabel(labelPrefix + "address");
+            updateHistory.setOldValue(oldAddress);
+            updateHistory.setNewValue(newAddress);
+            updateHistory.setUpdatedBy(userFullName);
+            updateHistories.add(updateHistory);
+        }
+    }
+
+    private void updateGuardian(
+        UUID applicationId,
+        GuardianUpdateRequest request,
+        Guardian guardian,
+        List<UpdateHistory> updateHistories,
+        String userFullName
+    ) {
+        if (request == null) return;
+        var oldFullName = CommonUtil.buildFullName(
+            guardian.getFirstName(),
+            guardian.getLastName(),
+            guardian.getAlias()
+        );
+        var newFullName = CommonUtil.buildFullName(
+            request.getFirstName(),
+            request.getLastName(),
+            request.getAlias()
+        );
+        if (!Objects.equals(oldFullName, newFullName)) {
+            var updateHistory = new UpdateHistory();
+            updateHistory.setApplicationId(applicationId);
+            updateHistory.setLabel("guardian_full_name");
+            updateHistory.setOldValue(oldFullName);
+            updateHistory.setNewValue(newFullName);
+            updateHistory.setUpdatedBy(userFullName);
+            updateHistories.add(updateHistory);
+        }
+
+        var oldBirthInfo = CommonUtil.buildBirthInfo(
+            guardian.getBirthPlace(),
+            guardian.getBirthDate()
+        );
+        var newBirthInfo = CommonUtil.buildBirthInfo(
+            request.getBirthPlace(),
+            request.getBirthDate()
+        );
+        if (!Objects.equals(oldBirthInfo, newBirthInfo)) {
+            var updateHistory = new UpdateHistory();
+            updateHistory.setApplicationId(applicationId);
+            updateHistory.setLabel("guardian_birth_info");
+            updateHistory.setOldValue(oldBirthInfo);
+            updateHistory.setNewValue(newBirthInfo);
+            updateHistory.setUpdatedBy(userFullName);
+            updateHistories.add(updateHistory);
+        }
+
+        var oldIdentityId = guardian.getIdentityId();
+        var newIdentityId = request.getIdentityId();
+        if (!Objects.equals(oldIdentityId, newIdentityId)) {
+            var updateHistory = new UpdateHistory();
+            updateHistory.setApplicationId(applicationId);
+            updateHistory.setLabel("guardian_identity_id");
+            updateHistory.setOldValue(oldIdentityId);
+            updateHistory.setNewValue(newIdentityId);
+            updateHistory.setUpdatedBy(userFullName);
+            updateHistories.add(updateHistory);
+        }
+
+        var oldFatherName = guardian.getFatherName();
+        var newFatherName = request.getFatherName();
+        if (!Objects.equals(oldFatherName, newFatherName)) {
+            var updateHistory = new UpdateHistory();
+            updateHistory.setApplicationId(applicationId);
+            updateHistory.setLabel("guardian_father_name");
+            updateHistory.setOldValue(oldFatherName);
+            updateHistory.setNewValue(newFatherName);
+            updateHistory.setUpdatedBy(userFullName);
+            updateHistories.add(updateHistory);
+        }
+
+        var oldAddress = CommonUtil.buildFullAddress(
+            guardian.getAddress(),
+            guardian.getRt(),
+            guardian.getRw(),
+            guardian.getSubDistrictName(),
+            guardian.getDistrictName(),
+            guardian.getCityName(),
+            guardian.getProvinceName(),
+            guardian.getZipCode()
+        );
+        var newAddress = CommonUtil.buildFullAddress(
+            request.getAddress(),
+            request.getRt(),
+            request.getRw(),
+            request.getSubDistrictName(),
+            request.getDistrictName(),
+            request.getCityName(),
+            request.getProvinceName(),
+            request.getZipCode()
+        );
+        if (!Objects.equals(oldAddress, newAddress)) {
+            var updateHistory = new UpdateHistory();
+            updateHistory.setApplicationId(applicationId);
+            updateHistory.setLabel("guardian_address");
+            updateHistory.setOldValue(oldAddress);
+            updateHistory.setNewValue(newAddress);
+            updateHistory.setUpdatedBy(userFullName);
+            updateHistories.add(updateHistory);
+        }
+    }
+
+    private void updateBrideMother(
+        UUID applicationId,
+        BrideMotherUpdateRequest request,
+        BrideMother brideMother,
+        List<UpdateHistory> updateHistories,
+        String userFullName
+    ) {
+        if (request == null) return;
+        var oldFullName = CommonUtil.buildFullName(
+            brideMother.getFirstName(),
+            brideMother.getLastName(),
+            brideMother.getAlias()
+        );
+        var newFullName = CommonUtil.buildFullName(
+            request.getFirstName(),
+            request.getLastName(),
+            request.getAlias()
+        );
+        if (!Objects.equals(oldFullName, newFullName)) {
+            var updateHistory = new UpdateHistory();
+            updateHistory.setApplicationId(applicationId);
+            updateHistory.setLabel("bride_mother_full_name");
+            updateHistory.setOldValue(oldFullName);
+            updateHistory.setNewValue(newFullName);
+            updateHistory.setUpdatedBy(userFullName);
+            updateHistories.add(updateHistory);
+        }
+
+        var oldBirthInfo = CommonUtil.buildBirthInfo(
+            brideMother.getBirthPlace(),
+            brideMother.getBirthDate()
+        );
+        var newBirthInfo = CommonUtil.buildBirthInfo(
+            request.getBirthPlace(),
+            request.getBirthDate()
+        );
+        if (!Objects.equals(oldBirthInfo, newBirthInfo)) {
+            var updateHistory = new UpdateHistory();
+            updateHistory.setApplicationId(applicationId);
+            updateHistory.setLabel("bride_mother_birth_info");
+            updateHistory.setOldValue(oldBirthInfo);
+            updateHistory.setNewValue(newBirthInfo);
+            updateHistory.setUpdatedBy(userFullName);
+            updateHistories.add(updateHistory);
+        }
+
+        var oldIdentityId = brideMother.getIdentityId();
+        var newIdentityId = request.getIdentityId();
+        if (!Objects.equals(oldIdentityId, newIdentityId)) {
+            var updateHistory = new UpdateHistory();
+            updateHistory.setApplicationId(applicationId);
+            updateHistory.setLabel("bride_mother_identity_id");
+            updateHistory.setOldValue(oldIdentityId);
+            updateHistory.setNewValue(newIdentityId);
+            updateHistory.setUpdatedBy(userFullName);
+            updateHistories.add(updateHistory);
+        }
+
+        var oldFatherName = brideMother.getFatherName();
+        var newFatherName = request.getFatherName();
+        if (!Objects.equals(oldFatherName, newFatherName)) {
+            var updateHistory = new UpdateHistory();
+            updateHistory.setApplicationId(applicationId);
+            updateHistory.setLabel("bride_mother_father_name");
+            updateHistory.setOldValue(oldFatherName);
+            updateHistory.setNewValue(newFatherName);
+            updateHistory.setUpdatedBy(userFullName);
+            updateHistories.add(updateHistory);
+        }
+
+        var oldAddress = CommonUtil.buildFullAddress(
+            brideMother.getAddress(),
+            brideMother.getRt(),
+            brideMother.getRw(),
+            brideMother.getSubDistrictName(),
+            brideMother.getDistrictName(),
+            brideMother.getCityName(),
+            brideMother.getProvinceName(),
+            brideMother.getZipCode()
+        );
+        var newAddress = CommonUtil.buildFullAddress(
+            request.getAddress(),
+            request.getRt(),
+            request.getRw(),
+            request.getSubDistrictName(),
+            request.getDistrictName(),
+            request.getCityName(),
+            request.getProvinceName(),
+            request.getZipCode()
+        );
+        if (!Objects.equals(oldAddress, newAddress)) {
+            var updateHistory = new UpdateHistory();
+            updateHistory.setApplicationId(applicationId);
+            updateHistory.setLabel("bride_mother_address");
+            updateHistory.setOldValue(oldAddress);
+            updateHistory.setNewValue(newAddress);
+            updateHistory.setUpdatedBy(userFullName);
+            updateHistories.add(updateHistory);
+        }
+    }
+
+    private void updateBrideFather(
+        UUID applicationId,
+        BrideFatherUpdateRequest request,
+        BrideFather brideFather,
+        List<UpdateHistory> updateHistories,
+        String userFullName
+    ) {
+        if (request == null) return;
+        var oldFullName = CommonUtil.buildFullName(
+            brideFather.getFirstName(),
+            brideFather.getLastName(),
+            brideFather.getAlias()
+        );
+        var newFullName = CommonUtil.buildFullName(
+            request.getFirstName(),
+            request.getLastName(),
+            request.getAlias()
+        );
+        if (!Objects.equals(oldFullName, newFullName)) {
+            var updateHistory = new UpdateHistory();
+            updateHistory.setApplicationId(applicationId);
+            updateHistory.setLabel("bride_father_full_name");
+            updateHistory.setOldValue(oldFullName);
+            updateHistory.setNewValue(newFullName);
+            updateHistory.setUpdatedBy(userFullName);
+            updateHistories.add(updateHistory);
+        }
+
+        var oldBirthInfo = CommonUtil.buildBirthInfo(
+            brideFather.getBirthPlace(),
+            brideFather.getBirthDate()
+        );
+        var newBirthInfo = CommonUtil.buildBirthInfo(
+            request.getBirthPlace(),
+            request.getBirthDate()
+        );
+        if (!Objects.equals(oldBirthInfo, newBirthInfo)) {
+            var updateHistory = new UpdateHistory();
+            updateHistory.setApplicationId(applicationId);
+            updateHistory.setLabel("bride_father_birth_info");
+            updateHistory.setOldValue(oldBirthInfo);
+            updateHistory.setNewValue(newBirthInfo);
+            updateHistory.setUpdatedBy(userFullName);
+            updateHistories.add(updateHistory);
+        }
+
+        var oldIdentityId = brideFather.getIdentityId();
+        var newIdentityId = request.getIdentityId();
+        if (!Objects.equals(oldIdentityId, newIdentityId)) {
+            var updateHistory = new UpdateHistory();
+            updateHistory.setApplicationId(applicationId);
+            updateHistory.setLabel("bride_father_identity_id");
+            updateHistory.setOldValue(oldIdentityId);
+            updateHistory.setNewValue(newIdentityId);
+            updateHistory.setUpdatedBy(userFullName);
+            updateHistories.add(updateHistory);
+        }
+
+        var oldFatherName = brideFather.getFatherName();
+        var newFatherName = request.getFatherName();
+        if (!Objects.equals(oldFatherName, newFatherName)) {
+            var updateHistory = new UpdateHistory();
+            updateHistory.setApplicationId(applicationId);
+            updateHistory.setLabel("bride_father_father_name");
+            updateHistory.setOldValue(oldFatherName);
+            updateHistory.setNewValue(newFatherName);
+            updateHistory.setUpdatedBy(userFullName);
+            updateHistories.add(updateHistory);
+        }
+
+        var oldAddress = CommonUtil.buildFullAddress(
+            brideFather.getAddress(),
+            brideFather.getRt(),
+            brideFather.getRw(),
+            brideFather.getSubDistrictName(),
+            brideFather.getDistrictName(),
+            brideFather.getCityName(),
+            brideFather.getProvinceName(),
+            brideFather.getZipCode()
+        );
+        var newAddress = CommonUtil.buildFullAddress(
+            request.getAddress(),
+            request.getRt(),
+            request.getRw(),
+            request.getSubDistrictName(),
+            request.getDistrictName(),
+            request.getCityName(),
+            request.getProvinceName(),
+            request.getZipCode()
+        );
+        if (!Objects.equals(oldAddress, newAddress)) {
+            var updateHistory = new UpdateHistory();
+            updateHistory.setApplicationId(applicationId);
+            updateHistory.setLabel("bride_father_address");
+            updateHistory.setOldValue(oldAddress);
+            updateHistory.setNewValue(newAddress);
+            updateHistory.setUpdatedBy(userFullName);
+            updateHistories.add(updateHistory);
+        }
+    }
+
+    private void updateGroomFather(
+        UUID applicationId,
+        GroomFatherUpdateRequest request,
+        GroomFather groomFather,
+        List<UpdateHistory> updateHistories,
+        String userFullName
+    ) {
+        if (request == null) return;
+        var oldFullName = CommonUtil.buildFullName(
+            groomFather.getFirstName(),
+            groomFather.getLastName(),
+            groomFather.getAlias()
+        );
+        var newFullName = CommonUtil.buildFullName(
+            request.getFirstName(),
+            request.getLastName(),
+            request.getAlias()
+        );
+        if (!Objects.equals(oldFullName, newFullName)) {
+            var updateHistory = new UpdateHistory();
+            updateHistory.setApplicationId(applicationId);
+            updateHistory.setLabel("groom_father_full_name");
+            updateHistory.setOldValue(oldFullName);
+            updateHistory.setNewValue(newFullName);
+            updateHistory.setUpdatedBy(userFullName);
+            updateHistories.add(updateHistory);
+        }
+
+        var oldBirthInfo = CommonUtil.buildBirthInfo(
+            groomFather.getBirthPlace(),
+            groomFather.getBirthDate()
+        );
+        var newBirthInfo = CommonUtil.buildBirthInfo(
+            request.getBirthPlace(),
+            request.getBirthDate()
+        );
+        if (!Objects.equals(oldBirthInfo, newBirthInfo)) {
+            var updateHistory = new UpdateHistory();
+            updateHistory.setApplicationId(applicationId);
+            updateHistory.setLabel("groom_father_birth_info");
+            updateHistory.setOldValue(oldBirthInfo);
+            updateHistory.setNewValue(newBirthInfo);
+            updateHistory.setUpdatedBy(userFullName);
+            updateHistories.add(updateHistory);
+        }
+
+        var oldIdentityId = groomFather.getIdentityId();
+        var newIdentityId = request.getIdentityId();
+        if (!Objects.equals(oldIdentityId, newIdentityId)) {
+            var updateHistory = new UpdateHistory();
+            updateHistory.setApplicationId(applicationId);
+            updateHistory.setLabel("groom_father_identity_id");
+            updateHistory.setOldValue(oldIdentityId);
+            updateHistory.setNewValue(newIdentityId);
+            updateHistory.setUpdatedBy(userFullName);
+            updateHistories.add(updateHistory);
+        }
+
+        var oldFatherName = groomFather.getFatherName();
+        var newFatherName = request.getFatherName();
+        if (!Objects.equals(oldFatherName, newFatherName)) {
+            var updateHistory = new UpdateHistory();
+            updateHistory.setApplicationId(applicationId);
+            updateHistory.setLabel("groom_father_father_name");
+            updateHistory.setOldValue(oldFatherName);
+            updateHistory.setNewValue(newFatherName);
+            updateHistory.setUpdatedBy(userFullName);
+            updateHistories.add(updateHistory);
+        }
+
+        var oldAddress = CommonUtil.buildFullAddress(
+            groomFather.getAddress(),
+            groomFather.getRt(),
+            groomFather.getRw(),
+            groomFather.getSubDistrictName(),
+            groomFather.getDistrictName(),
+            groomFather.getCityName(),
+            groomFather.getProvinceName(),
+            groomFather.getZipCode()
+        );
+        var newAddress = CommonUtil.buildFullAddress(
+            request.getAddress(),
+            request.getRt(),
+            request.getRw(),
+            request.getSubDistrictName(),
+            request.getDistrictName(),
+            request.getCityName(),
+            request.getProvinceName(),
+            request.getZipCode()
+        );
+        if (!Objects.equals(oldAddress, newAddress)) {
+            var updateHistory = new UpdateHistory();
+            updateHistory.setApplicationId(applicationId);
+            updateHistory.setLabel("groom_father_address");
+            updateHistory.setOldValue(oldAddress);
+            updateHistory.setNewValue(newAddress);
+            updateHistory.setUpdatedBy(userFullName);
+            updateHistories.add(updateHistory);
+        }
+    }
+
+    private void updateGroomMother(
+        UUID applicationId,
+        GroomMotherUpdateRequest request,
+        GroomMother groomMother,
+        List<UpdateHistory> updateHistories,
+        String userFullName
+    ) {
+        if (request == null) return;
+        var oldFullName = CommonUtil.buildFullName(
+            groomMother.getFirstName(),
+            groomMother.getLastName(),
+            groomMother.getAlias()
+        );
+        var newFullName = CommonUtil.buildFullName(
+            request.getFirstName(),
+            request.getLastName(),
+            request.getAlias()
+        );
+        if (!Objects.equals(oldFullName, newFullName)) {
+            var updateHistory = new UpdateHistory();
+            updateHistory.setApplicationId(applicationId);
+            updateHistory.setLabel("groom_mother_full_name");
+            updateHistory.setOldValue(oldFullName);
+            updateHistory.setNewValue(newFullName);
+            updateHistory.setUpdatedBy(userFullName);
+            updateHistories.add(updateHistory);
+        }
+
+        var oldBirthInfo = CommonUtil.buildBirthInfo(
+            groomMother.getBirthPlace(),
+            groomMother.getBirthDate()
+        );
+        var newBirthInfo = CommonUtil.buildBirthInfo(
+            request.getBirthPlace(),
+            request.getBirthDate()
+        );
+        if (!Objects.equals(oldBirthInfo, newBirthInfo)) {
+            var updateHistory = new UpdateHistory();
+            updateHistory.setApplicationId(applicationId);
+            updateHistory.setLabel("groom_mother_birth_info");
+            updateHistory.setOldValue(oldBirthInfo);
+            updateHistory.setNewValue(newBirthInfo);
+            updateHistory.setUpdatedBy(userFullName);
+            updateHistories.add(updateHistory);
+        }
+
+        var oldIdentityId = groomMother.getIdentityId();
+        var newIdentityId = request.getIdentityId();
+        if (!Objects.equals(oldIdentityId, newIdentityId)) {
+            var updateHistory = new UpdateHistory();
+            updateHistory.setApplicationId(applicationId);
+            updateHistory.setLabel("groom_mother_identity_id");
+            updateHistory.setOldValue(oldIdentityId);
+            updateHistory.setNewValue(newIdentityId);
+            updateHistory.setUpdatedBy(userFullName);
+            updateHistories.add(updateHistory);
+        }
+
+        var oldFatherName = groomMother.getFatherName();
+        var newFatherName = request.getFatherName();
+        if (!Objects.equals(oldFatherName, newFatherName)) {
+            var updateHistory = new UpdateHistory();
+            updateHistory.setApplicationId(applicationId);
+            updateHistory.setLabel("groom_mother_father_name");
+            updateHistory.setOldValue(oldFatherName);
+            updateHistory.setNewValue(newFatherName);
+            updateHistory.setUpdatedBy(userFullName);
+            updateHistories.add(updateHistory);
+        }
+
+        var oldAddress = CommonUtil.buildFullAddress(
+            groomMother.getAddress(),
+            groomMother.getRt(),
+            groomMother.getRw(),
+            groomMother.getSubDistrictName(),
+            groomMother.getDistrictName(),
+            groomMother.getCityName(),
+            groomMother.getProvinceName(),
+            groomMother.getZipCode()
+        );
+        var newAddress = CommonUtil.buildFullAddress(
+            request.getAddress(),
+            request.getRt(),
+            request.getRw(),
+            request.getSubDistrictName(),
+            request.getDistrictName(),
+            request.getCityName(),
+            request.getProvinceName(),
+            request.getZipCode()
+        );
+        if (!Objects.equals(oldAddress, newAddress)) {
+            var updateHistory = new UpdateHistory();
+            updateHistory.setApplicationId(applicationId);
+            updateHistory.setLabel("groom_mother_address");
+            updateHistory.setOldValue(oldAddress);
+            updateHistory.setNewValue(newAddress);
+            updateHistory.setUpdatedBy(userFullName);
+            updateHistories.add(updateHistory);
+        }
     }
 
     @Override

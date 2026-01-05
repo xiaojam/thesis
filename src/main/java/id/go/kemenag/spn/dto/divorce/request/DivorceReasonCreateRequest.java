@@ -6,21 +6,24 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDate;
+import java.util.List;
+
 @Data
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
 public class DivorceReasonCreateRequest {
 
-    @JsonProperty("initial_situation")
-    private String initialSituation;
+    @JsonProperty("conflict_start_date")
+    private LocalDate conflictStartDate;
 
-    @JsonProperty("conflict_reason")
-    private String conflictReason;
+    @JsonProperty("conflict_causes")
+    private List<String> conflictCauses;
 
-    @JsonProperty("reconciliation_attempt")
-    private String reconciliationAttempt;
+    @JsonProperty("conflict_climax_date")
+    private LocalDate conflictClimaxDate;
 
-    @JsonProperty("current_condition")
-    private String currentCondition;
+    @JsonProperty("separation_date")
+    private LocalDate separationDate;
 }
