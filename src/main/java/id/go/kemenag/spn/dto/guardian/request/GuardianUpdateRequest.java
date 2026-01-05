@@ -36,24 +36,6 @@ public class GuardianUpdateRequest {
     @JsonProperty("birth_date")
     private LocalDate birthDate;
 
-    @JsonProperty("gender")
-    private MarriageConstant.Gender gender;
-
-    @JsonProperty("job")
-    private String job;
-
-    @JsonProperty("nationality")
-    private String nationality;
-
-    @JsonProperty("religion")
-    private MarriageConstant.Religion religion;
-
-    @JsonProperty("marital_status")
-    private MarriageConstant.MaritalStatus maritalStatus;
-
-    @JsonProperty("status")
-    private MarriageConstant.GuardianStatus status;
-
     @JsonProperty("father_name")
     private String fatherName;
 

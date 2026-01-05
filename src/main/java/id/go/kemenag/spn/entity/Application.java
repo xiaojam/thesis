@@ -41,4 +41,7 @@ public class Application extends BaseEntity {
 
     @OneToMany(mappedBy = "application", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<ApplicationHandler> applicationHandler = new ArrayList<>();
+
+    @Column
+    private String documentPath;
 }

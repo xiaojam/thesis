@@ -66,7 +66,7 @@ public class SecurityConfig {
                 .requestMatchers("/camunda/**", "/camunda**").permitAll()
                 .requestMatchers("/public/**").permitAll()
                 .requestMatchers("/error").permitAll()
-                .requestMatchers("/v1/application/**").permitAll()
+                .requestMatchers("/v1/application/**", "/v1/divorce/download/**").permitAll()
                 .requestMatchers("/v1/auth/**").permitAll()
                 .anyRequest().authenticated()
             )

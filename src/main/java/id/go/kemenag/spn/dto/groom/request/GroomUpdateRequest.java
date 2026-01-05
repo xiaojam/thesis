@@ -35,24 +35,6 @@ public class GroomUpdateRequest {
     @JsonProperty("birth_date")
     private LocalDate birthDate;
 
-    @JsonProperty("gender")
-    private MarriageConstant.Gender gender;
-
-    @JsonProperty("job")
-    private String job;
-
-    @JsonProperty("nationality")
-    private String nationality;
-
-    @JsonProperty("religion")
-    private MarriageConstant.Religion religion;
-
-    @JsonProperty("marital_status")
-    private MarriageConstant.MaritalStatus maritalStatus;
-
-    @JsonProperty("phone_number")
-    private String phoneNumber;
-
     @JsonProperty("province_code")
     private String provinceCode;
 

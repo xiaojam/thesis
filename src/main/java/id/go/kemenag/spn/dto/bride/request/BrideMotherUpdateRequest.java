@@ -37,17 +37,8 @@ public class BrideMotherUpdateRequest {
     @JsonProperty("birth_date")
     private LocalDate birthDate;
 
-    @JsonProperty("job")
-    private String job;
-
-    @JsonProperty("nationality")
-    private String nationality;
-
-    @JsonProperty("religion")
-    private MarriageConstant.Religion religion;
-
-    @JsonProperty("deceased")
-    private boolean deceased;
+    @JsonProperty("father_name")
+    private String fatherName;
 
     @JsonProperty("province_code")
     private String provinceCode;

@@ -14,6 +14,9 @@ import java.util.List;
 @NoArgsConstructor
 public class ChildClaimCreateRequest {
 
+    @JsonProperty("claimed")
+    private Boolean claimed;
+
     @JsonProperty("custody_request")
     private String custodyRequest;
 

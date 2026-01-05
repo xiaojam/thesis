@@ -54,6 +54,9 @@ public class DefendantResponse {
     @JsonProperty("job")
     private String job;
 
+    @JsonProperty("salary")
+    private Double salary;
+
     @JsonProperty("phone_number")
     private String phoneNumber;
 

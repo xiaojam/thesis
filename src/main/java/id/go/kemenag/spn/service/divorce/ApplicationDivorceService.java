@@ -5,6 +5,7 @@ import id.go.kemenag.spn.dto.application.request.ApplicationDivorceDoneRequest;
 import id.go.kemenag.spn.dto.application.response.ApplicationCreateResponse;
 import id.go.kemenag.spn.dto.application.response.ApplicationDivorceDoneResponse;
 import id.go.kemenag.spn.dto.application.response.ApplicationDivorceResponse;
+import id.go.kemenag.spn.dto.application.response.ApplicationDivorceStatusResponse;
 import jakarta.validation.Valid;
 
 import java.util.List;
@@ -18,4 +19,8 @@ public interface ApplicationDivorceService {
     ApplicationDivorceResponse findApplicationByIdBasedOnHandler(UUID applicationId);
 
     ApplicationDivorceDoneResponse doneApplication(@Valid ApplicationDivorceDoneRequest request);
+
+    byte[] downloadDivorceDocument(String applicationNumber);
+
+    ApplicationDivorceStatusResponse checkDivorceStatus(String applicationNumber);
 }

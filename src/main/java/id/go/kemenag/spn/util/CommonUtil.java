@@ -3,15 +3,26 @@ package id.go.kemenag.spn.util;
 import id.go.kemenag.spn.constant.DivorceConstant;
 import id.go.kemenag.spn.constant.MarriageConstant;
 
+import java.text.NumberFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Locale;
 import java.util.StringJoiner;
+import java.util.UUID;
 
 public class CommonUtil {
 
     private static final int MAX_LENGTH = 25;
+
+    public static String removeSpecialCharacters(String input) {
+        if (input == null) {
+            return null;
+        }
+
+        return input.replaceAll("[^a-zA-Z0-9]", "");
+    }
 
     public static String buildFullName(String firstName, String lastName, String alias) {
         StringBuilder fullName = new StringBuilder();
@@ -38,7 +49,7 @@ public class CommonUtil {
         return fullName.toString();
     }
 
-    public static String buildFullAddress(String address, String rt, String rw, String subDistrict, String district, String city, String province) {
+    public static String buildFullAddress(String address, String rt, String rw, String subDistrict, String district, String city, String province, String zipCode) {
         StringBuilder fullAddress = new StringBuilder();
 
         if (address != null && !address.trim().isEmpty()) {
@@ -85,6 +96,13 @@ public class CommonUtil {
                 fullAddress.append(", ");
             }
             fullAddress.append(province.trim());
+        }
+
+        if (zipCode != null && !zipCode.trim().isEmpty()) {
+            if (!fullAddress.isEmpty()) {
+                fullAddress.append(" - ");
+            }
+            fullAddress.append(zipCode.trim());
         }
 
         return fullAddress.toString();
@@ -135,6 +153,30 @@ public class CommonUtil {
         return date.format(formatter);
     }
 
+    public static String normalizeTotalDuration(LocalDate startDate, LocalDate endDate) {
+        if (startDate == null || endDate == null || endDate.isBefore(startDate)) {
+            return "";
+        }
+
+        long totalDays = java.time.temporal.ChronoUnit.DAYS.between(startDate, endDate) + 1; // inclusive
+        long years = totalDays / 365;
+        long months = (totalDays % 365) / 30;
+        long days = (totalDays % 365) % 30;
+
+        StringBuilder result = new StringBuilder();
+        if (years > 0) {
+            result.append(years).append(" tahun ");
+        }
+        if (months > 0) {
+            result.append(months).append(" bulan ");
+        }
+        if (days > 0) {
+            result.append(days).append(" hari");
+        }
+
+        return result.toString().trim();
+    }
+
     public static String normalizeDateTime(LocalDateTime date) {
         if (date == null) {
             return "";
@@ -142,6 +184,15 @@ public class CommonUtil {
 
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("d MMMM yyyy/HH:mm", new Locale("id", "ID"));
         return date.format(formatter) + " WIB";
+    }
+
+    public static String normalizeZonedDateTime(ZonedDateTime date) {
+        if (date == null) {
+            return "";
+        }
+
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("EEEE, d MMMM yyyy '\n pukul ' HH:mm ' WIB'", new Locale("id", "ID"));
+        return date.format(formatter);
     }
 
     public static String getRomanMonth(int month) {
@@ -376,6 +427,88 @@ public class CommonUtil {
             case BROTHER -> "Saudara laki-laki";
             case UNCLE -> "Paman";
             case JUDGE -> "Hakim";
+        };
+    }
+
+    public static String simplifyUUID(UUID uuid) {
+        if (uuid == null) {
+            return "";
+        }
+
+        String uuidStr = uuid.toString();
+        if (uuidStr.length() <= 10) {
+            return uuidStr;
+        }
+
+        return uuidStr.substring(0, 5) + uuidStr.substring(uuidStr.length() - 5);
+    }
+
+    public static String formatCurrency(Double amount) {
+        if (amount == null) return null;
+
+        NumberFormat currencyFormatter = NumberFormat.getCurrencyInstance(Locale.of("id", "ID"));
+        currencyFormatter.setMinimumFractionDigits(0);
+        currencyFormatter.setMaximumFractionDigits(0);
+
+        return currencyFormatter.format(amount).replace(",00", "");
+    }
+
+    public static String normalizeDocumentLabel(String label) {
+
+        // example input bride_full_name -> nama lengkap pengantin wanita
+        if (label == null || label.isEmpty()) {
+            return "";
+        }
+
+        return switch (label) {
+            case "bride_full_name" -> "Nama Lengkap Pengantin Wanita";
+            case "bride_identity_id" -> "Nomor KTP Pengantin Wanita";
+            case "bride_birth_info" -> "Tempat dan Tanggal Lahir Pengantin Wanita";
+            case "bride_address" -> "Alamat Pengantin Wanita";
+            case "groom_full_name" -> "Nama Lengkap Pengantin Pria";
+            case "groom_identity_id" -> "Nomor KTP Pengantin Pria";
+            case "groom_birth_info" -> "Tempat dan Tanggal Lahir Pengantin Pria";
+            case "groom_address" -> "Alamat Pengantin Pria";
+            case "marriage_time" -> "Waktu Pernikahan";
+            case "marriage_location" -> "Tempat Pernikahan";
+            case "marriage_dowry" -> "Mahar Pernikahan";
+            case "previous_groom_partner_full_name" -> "Nama Lengkap Mantan Pasangan Suami";
+            case "previous_groom_partner_identity_id" -> "Nomor KTP Mantan Pasangan Suami";
+            case "previous_groom_partner_birth_info" -> "Tempat dan Tanggal Lahir Mantan Pasangan Suami";
+            case "previous_groom_partner_death_info" -> "Tempat dan Tanggal Meninggal Mantan Pasangan Suami";
+            case "previous_groom_partner_father_name" -> "Nama Ayah Mantan Pasangan Suami";
+            case "previous_groom_partner_address" -> "Alamat Mantan Pasangan Suami";
+            case "previous_bride_partner_full_name" -> "Nama Lengkap Mantan Pasangan Istri";
+            case "previous_bride_partner_identity_id" -> "Nomor KTP Mantan Pasangan Istri";
+            case "previous_bride_partner_birth_info" -> "Tempat dan Tanggal Lahir Mantan Pasangan Istri";
+            case "previous_bride_partner_death_info" -> "Tempat dan Tanggal Meninggal Mantan Pasangan Istri";
+            case "previous_bride_partner_father_name" -> "Nama Ayah Mantan Pasangan Istri";
+            case "previous_bride_partner_address" -> "Alamat Mantan Pasangan Istri";
+            case "guardian_full_name" -> "Nama Lengkap Wali";
+            case "guardian_identity_id" -> "Nomor KTP Wali";
+            case "guardian_birth_info" -> "Tempat dan Tanggal Lahir Wali";
+            case "guardian_address" -> "Alamat Wali";
+            case "bride_mother_full_name" -> "Nama Lengkap Ibu Pengantin Wanita";
+            case "bride_mother_father_name" -> "Nama Kakek Pengantin Wanita";
+            case "bride_mother_identity_id" -> "Nomor KTP Ibu Pengantin Wanita";
+            case "bride_mother_birth_info" -> "Tempat dan Tanggal Lahir Ibu Pengantin Wanita";
+            case "bride_mother_address" -> "Alamat Ibu Pengantin Wanita";
+            case "groom_mother_full_name" -> "Nama Lengkap Ibu Pengantin Pria";
+            case "groom_mother_father_name" -> "Nama Kakek Pengantin Pria";
+            case "groom_mother_identity_id" -> "Nomor KTP Ibu Pengantin Pria";
+            case "groom_mother_birth_info" -> "Tempat dan Tanggal Lahir Ibu Pengantin Pria";
+            case "groom_mother_address" -> "Alamat Ibu Pengantin Pria";
+            case "bride_father_full_name" -> "Nama Lengkap Ayah Pengantin Wanita";
+            case "bride_father_father_name" -> "Nama Kakek Pengantin Wanita";
+            case "bride_father_identity_id" -> "Nomor KTP Ayah Pengantin Wanita";
+            case "bride_father_birth_info" -> "Tempat dan Tanggal Lahir Ayah Pengantin Wanita";
+            case "bride_father_address" -> "Alamat Ayah Pengantin Wanita";
+            case "groom_father_full_name" -> "Nama Lengkap Ayah Pengantin Pria";
+            case "groom_father_father_name" -> "Nama Kakek Pengantin Pria";
+            case "groom_father_identity_id" -> "Nomor KTP Ayah Pengantin Pria";
+            case "groom_father_birth_info" -> "Tempat dan Tanggal Lahir Ayah Pengantin Pria";
+            case "groom_father_address" -> "Alamat Ayah Pengantin Pria";
+            default -> CommonUtil.removeSpecialCharacters(label);
         };
     }
 }

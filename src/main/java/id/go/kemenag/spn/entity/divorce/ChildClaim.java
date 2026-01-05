@@ -22,6 +22,10 @@ public class ChildClaim extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
+    @Column
+    @Builder.Default
+    private Boolean claimed = false;
+
     @OneToOne
     @JoinColumn(name = "divorce_case_id")
     private DivorceCase divorceCase;

@@ -18,8 +18,8 @@ public class DivorceReasonResponse {
     @JsonProperty("conflict_reason")
     private String conflictReason;
 
-    @JsonProperty("reconciliation_attempt")
-    private String reconciliationAttempt;
+    @JsonProperty("reconciliation_attempt_description")
+    private String reconciliationAttemptDescription;
 
     @JsonProperty("current_condition")
     private String currentCondition;

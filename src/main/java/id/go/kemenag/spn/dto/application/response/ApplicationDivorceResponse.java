@@ -61,4 +61,19 @@ public class ApplicationDivorceResponse {
 
     @JsonProperty("schedules")
     private List<CaseScheduleResponse> schedules;
+
+    @JsonProperty("reconciliation_attempt_description")
+    private String reconciliationAttemptDescription;
+
+    @JsonProperty("iddah_support_amount")
+    private Double iddahSupportAmount;
+
+    @JsonProperty("mutah_description")
+    private String mutahDescription;
+
+    @JsonProperty("maddiyah_support_amount")
+    private Double maddiyahSupportAmount;
+
+    @JsonProperty("maddiyah_duration_in_months")
+    private Integer maddiyahDurationInMonths;
 }

@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <title th:text="${documentDto.caseTitle}">Gugatan Perceraian</title>
+    <style>
+        @Page {
+            size: A4;
+            margin: 2cm;
+        }
+
+        body {
+            font-family: 'Times New Roman', Times, serif;
+            font-size: 10pt;
+            line-height: 1.2;
+            width: 100%;
+            margin: 0;
+            background: white;
+        }
+
+        .page {
+            background: white;
+            box-shadow: 0 0 0.5cm rgba(0, 0, 0, 0.5);
+            padding: 0;
+        }
+
+        .address-block {
+            text-align: left;
+            margin-bottom: 20px;
+        }
+
+        .section-title {
+            text-align: center;
+            font-weight: bold;
+            margin-top: 20px;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+        }
+
+        .info-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .info-table td {
+            vertical-align: top;
+            padding: 2px 0;
+        }
+
+        .info-table td:first-child { width: 140px; }
+        .info-table td:nth-child(2) { width: 10px; }
+
+        ol {
+            padding-left: 20px;
+        }
+
+        ol > li {
+            margin-bottom: 5px;
+            margin-top: 5px;
+            text-align: justify;
+        }
+
+        ol ol {
+            padding-left: 30px;
+            list-style-type: lower-alpha;
+        }
+
+        .signature-block {
+            margin-top: 50px;
+            text-align: left;
+            width: 40%;
+            margin-left: 60%;
+        }
+
+        .signature-space {
+            padding: 45px 0;
+            margin-left: -30px;
+        }
+        .signature-name {
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        .breaker-page {
+            margin-top: 50px;
+            border: 1px solid transparent;
+        }
+    </style>
+</head>
+<body>
+
+<div class="page" th:object="${documentDto}">
+
+    <div class="address-block">
+        Hal : <strong th:text="*{caseTitle}">[Judul Gugatan]</strong>
+    </div>
+
+    <div class="address-block">
+        Kepada,<br/>
+        Yth. Ketua Pengadilan Agama <span th:text="*{courtName}">Magelang</span><br/>
+        di-<br/>
+        <span th:text="*{courtCity}">Magelang</span>
+    </div>
+
+    <div class="breaker-page"></div>
+
+    <p>Assalamu'alaikum Wr. Wb.</p>
+    <p>Yang bertanda tangan dibawah ini:</p>
+
+    <table class="info-table" th:object="${documentDto.plaintiff}">
+        <tr>
+            <td>Nama</td>
+            <td>:</td>
+            <td th:text="*{fullName}">[Nama Penggugat]</td>
+        </tr>
+        <tr>
+            <td>NIK</td>
+            <td>:</td>
+            <td th:text="*{identityId}">[NIK]</td>
+        </tr>
+        <tr>
+            <td>Tempat/Tanggal lahir</td>
+            <td>:</td>
+            <td th:text="*{birth}">[TTL]</td>
+        </tr>
+        <tr>
+            <td>Jenis Kelamin</td>
+            <td>:</td>
+            <td th:text="*{gender}">Perempuan</td>
+        </tr>
+        <tr>
+            <td>Agama</td>
+            <td>:</td>
+            <td th:text="*{religion}">Islam</td>
+        </tr>
+        <tr>
+            <td>Pendidikan</td>
+            <td>:</td>
+            <td th:text="*{education}">[Pendidikan]</td>
+        </tr>
+        <tr>
+            <td>Pekerjaan</td>
+            <td>:</td>
+            <td th:text="*{job}">[Pekerjaan]</td>
+        </tr>
+        <tr>
+            <td>No. HP.</td>
+            <td>:</td>
+            <td th:text="*{phoneNumber}">[HP]</td>
+        </tr>
+        <tr>
+            <td>Tempat tinggal</td>
+            <td>:</td>
+            <td th:text="*{address}">[Alamat]</td>
+        </tr>
+    </table>
+    <p>Selanjutnya disebut sebagai <strong>Penggugat</strong>.</p>
+
+    <p>Mengajukan gugatan terhadap suami penggugat:</p>
+
+    <table class="info-table" th:object="${documentDto.defendant}">
+        <tr>
+            <td>Nama</td>
+            <td>:</td>
+            <td th:text="*{fullName}">[Nama Tergugat]</td>
+        </tr>
+        <tr>
+            <td>NIK</td>
+            <td>:</td>
+            <td th:text="*{identityId}">[NIK]</td>
+        </tr>
+        <tr>
+            <td>Tempat/Tanggal lahir</td>
+            <td>:</td>
+            <td th:text="*{birth}">[TTL]</td>
+        </tr>
+        <tr>
+            <td>Jenis Kelamin</td>
+            <td>:</td>
+            <td th:text="*{gender}">Laki-laki</td>
+        </tr>
+        <tr>
+            <td>Agama</td>
+            <td>:</td>
+            <td th:text="*{religion}">Islam</td>
+        </tr>
+        <tr>
+            <td>Pendidikan</td>
+            <td>:</td>
+            <td th:text="*{education}">[Pendidikan]</td>
+        </tr>
+        <tr>
+            <td>Pekerjaan</td>
+            <td>:</td>
+            <td th:text="*{job}">[Pekerjaan]</td>
+        </tr>
+        <tr>
+            <td>No. HP.</td>
+            <td>:</td>
+            <td th:text="*{phoneNumber}">[HP]</td>
+        </tr>
+        <tr>
+            <td>Tempat tinggal</td>
+            <td>:</td>
+            <td th:text="*{address}">[Alamat]</td>
+        </tr>
+    </table>
+    <p>Selanjutnya disebut sebagai <strong>Tergugat</strong>.</p>
+
+    <div class="breaker-page"></div>
+    <div class="breaker-page"></div>
+    <div class="breaker-page"></div>
+    <div class="breaker-page"></div>
+    <div class="breaker-page"></div>
+
+    <div class="section-title">TENTANG PERMASALAHANNYA</div>
+    <ol>
+        <li th:object="${documentDto.marriageData}">
+            Bahwa Penggugat telah melangsungkan pernikahan dengan Tergugat pada tanggal
+            <span th:text="*{marriageDate}">[Tgl Nikah]</span>
+            di hadapan Pejabat PPN KUA kecamatan
+            <span th:text="*{marriagePlace}">[KUA]</span>
+            dengan kutipan Akta Nikah/Duplikat Akta Nikah Nomor
+            <span th:text="*{marriageCertificateNumber}">[No Akta]</span> tanggal
+            <span th:text="*{marriageDate}">[Tgl Akta]</span>.
+        </li>
+
+        <li>
+            Bahwa setelah menikah, Penggugat dan Tergugat hidup bersama dan semula bertempat tinggal di
+            <span th:text="${documentDto.marriageData.householdAddress}">[...]</span>
+            dan terakhir bertempat tinggal di
+            <span th:text="${documentDto.marriageData.householdAddress}">[...]</span>
+            sampai dengan tanggal <span th:text="${documentDto.divorceReason.separationDate}">[Tgl Pisah]</span>.
+        </li>
+
+        <li th:if="${documentDto.childClaim != null and !documentDto.childClaim.children.isEmpty()}"
+            th:object="${documentDto.childClaim}">
+            Bahwa setelah menikah, Penggugat dan Tergugat hidup sebagaimana layaknya suami istri dengan baik, telah berhubungan badan dan telah dikaruniai
+            <span th:text="*{childCount}">...</span>
+            orang anak yang masing-masing bernama:
+            <ol>
+                <li th:each="child : *{children}">
+                    <span th:text="${child.fullName}">[Nama]</span>, <span th:text="${child.gender}">[Gender]</span>,
+                    umur <span th:text="${child.age}">[Usia]</span>.
+                </li>
+            </ol>
+        </li>
+        <li th:if="${documentDto.childClaim == null or documentDto.childClaim.children.isEmpty()}">
+            Bahwa setelah menikah, Penggugat dan Tergugat hidup sebagaimana layaknya suami istri dengan baik, telah berhubungan badan dan belum dikaruniai anak.
+        </li>
+
+        <th:block th:object="${documentDto.divorceReason}">
+            <li>
+                Bahwa kehidupan rumah tangga Penggugat dan Tergugat mulai goyah dan terjadi perselisihan dan pertengkaran secara terus menerus yang sulit didamaikan sejak tanggal
+                <span th:text="*{conflictStartDate}">[Tgl Mulai]</span>.
+            </li>
+            <li th:if="*{conflictCauses != null and !conflictCauses.isEmpty()}">
+                Bahwa sebab-sebab terjadinya perselisihan dan pertengkaran tersebut adalah karena:
+                <ol>
+                    <li th:each="cause : *{conflictCauses}" th:text="${cause}">
+                        [Sebab]
+                    </li>
+                </ol>
+            </li>
+            <li>
+                Bahwa perselisihan dan pertengkaran antara Penggugat dan Tergugat semakin tajam dan memuncak pada tanggal
+                <span th:text="*{conflictClimaxDate}">[Tgl Puncak]</span>.
+            </li>
+            <li>
+                Bahwa akibat dari perselisihan dan pertengkaran tersebut, akhirnya sejak tanggal
+                <span th:text="*{separationDate}">[Tgl Pisah]</span>
+                hingga sekarang Penggugat dan Tergugat telah berpisah tempat tinggal/berpisah ranjang,
+                saat ini Penggugat bertempat tinggal di
+                <span th:text="${documentDto.plaintiff.address}">[Alamat P]</span>
+                dan tergugat bertempat tinggal di
+                <span th:text="${documentDto.defendant.address}">[Alamat T]</span>.
+            </li>
+        </th:block>
+
+        <li>
+            Bahwa berpisahnya Penggugat dan Tergugat selama <span th:text="${documentDto.divorceReason.totalSeparationDuration}">[Alamat T]</span>, maka hak dan kewajiban suami isteri tidak terlaksana sebagaimana mestinya.
+        </li>
+        <li>
+            Bahwa Penggugat telah berupaya mengatasi masalah rumah tangga Penggugat dengan Tergugat melalui jalan musyawarah atau berbicara dengan tergugat secara baik-baik tetapi tidak berhasil,
+            <span th:text="${documentDto.divorceReason.reconciliationAttemptDescription}">[Upaya Damai]</span>.
+        </li>
+        <li>
+            Bahwa dengan sebab-sebab tersebut diatas, maka Penggugat merasa rumah tangga antara Penggugat dan Tergugat tidak dapat dipertahankan lagi.
+        </li>
+
+        <li th:if="${documentDto.iddahSupportAmount != null or documentDto.mutahDescription != null}">
+            Bahwa mengingat Tergugat bekerja sebagai
+            <span th:text="${documentDto.defendant.job}">[Pekerjaan]</span>
+            dengan penghasilan rata-rata setiap bulan sejumlah <span th:text="${documentDto.defendant.salary}">[Gaji]</span>
+            maka jika terjadi perceraian Penggugat mohon agar Tergugat dihukum untuk membayar nafkah selama masa iddah sejumlah
+            <span th:text="${documentDto.iddahSupportAmount}">[Iddah]</span>
+            dan mut'ah berupa
+            <span th:text="${documentDto.mutahDescription}">[Mutah]</span>
+            yang harus dibayarkan sebelum Tergugat mengambil Akta Cerai.
+        </li>
+        <li th:if="${documentDto.maddiyahSupportAmount != null}">
+            Bahwa selama kurun waktu tersebut Tergugat tidak memberikan nafkah wajib kepada Penggugat meskipun Tergugat memiliki kemampuan untuk itu.
+            Oleh karena itu Penggugat memohon agar Tergugat dihukum untuk memberikan nafkah terutang (maddiyah) selama
+            <span th:text="${documentDto.maddiyahDurationInMonths}">[Bulan]</span> bulan sejumlah
+            <span th:text="${documentDto.maddiyahSupportAmount}">[Maddiyah]</span>
+            yang harus dibayarkan sebelum Tergugat mengambil Akta Cerai.
+        </li>
+        <li th:if="${documentDto.iddahSupportAmount != null or documentDto.mutahDescription != null or documentDto.maddiyahSupportAmount != null}">
+            Bahwa untuk menjamin terpenuhinya tuntutan Penggugat tentang nafkah iddah, mut'ah dan madliyah, Penggugat memohon agar Majelis Hakim memerintahkan Panitera Pengadilan Agama
+            <span th:text="${documentDto.courtName}">...</span> untuk menahan Akta Cerai.
+        </li>
+
+        <th:block th:if="${documentDto.propertyClaim != null}" th:object="${documentDto.propertyClaim}">
+            <li>
+                Bahwa selama perkawinan antara Penggugat dan Tergugat, telah diperoleh Harta Bersama (Gono-Gini) yang terdiri dari:
+                <ol>
+                    <li th:each="prop : *{properties}">
+                        <span th:text="${prop.propertyType}">[Tipe]</span>
+                        berupa <span th:text="${prop.description}">[Deskripsi]</span>,
+                        dengan bukti kepemilikan <span th:text="${prop.ownershipProof}">[Bukti]</span>,
+                        yang saat ini ditaksir seharga
+                        <span th:text="${prop.estimatedValue}">[Nilai]</span>.
+                    </li>
+                </ol>
+            </li>
+            <li>
+                Bahwa atas seluruh harta bersama tersebut, Penggugat memohon agar Majelis Hakim menetapkan dan membaginya
+                <span th:text="*{divisionRequest}">[Permintaan Pembagian]</span>.
+            </li>
+        </th:block>
+
+        <th:block th:if="${documentDto.childClaim != null}" th:object="${documentDto.childClaim}">
+            <li>
+                Bahwa anak-anak Penggugat dan Tergugat selama ini tinggal bersama dengan Penggugat,
+                oleh karena itu untuk kepentingan anak-anak itu sendiri dan rasa kasih sayang Penggugat terhadap mereka, maka Penggugat mohon agar anak-anak tersebut ditetapkan berada dalam pengasuhan dan pemeliharan Penggugat.
+            </li>
+            <li>
+                Bahwa <span th:text="*{childCount}">[jml]</span> anak-anak Penggugat dan Tergugat masih sangat membutuhkan biaya pemeliharaan, biaya pendidikan dan kesehatan sampai dengan dewasa/mandiri yang ditaksir per bulan sejumlah
+                <span th:text="*{monthlySupport}">[Biaya]</span>.
+                Oleh karena itu Penggugat mohon agar Tergugat dihukum untuk memberikan nafkah untuk anak tersebut per bulan yang diberikan melalui Penggugat.
+            </li>
+        </th:block>
+
+        <li>
+            Bahwa Penggugat sanggup membayar biaya yang timbul akibat perkara ini.
+        </li>
+    </ol>
+
+    <p>Berdasarkan alasan-alasan tersebut diatas, Penggugat mohon kepada Majelis Hakim untuk menjatuhkan putusan yang amarnya berbunyi, sebagai berikut:</p>
+
+    <div class="section-title">Primer:</div>
+    <ol>
+        <li>Mengabulkan gugatan Penggugat seluruhnya;</li>
+        <li>
+            Menjatuhkan talak satu ba 'in sughra Tergugat
+            (<strong th:text="${documentDto.defendant.fullName}">[Nama Tergugat]</strong>)
+            terhadap Penggugat
+            (<strong th:text="${documentDto.plaintiff.fullName}">[Nama Penggugat]</strong>);
+        </li>
+        <li th:if="${documentDto.iddahSupportAmount != null or documentDto.mutahDescription != null or documentDto.maddiyahSupportAmount != null}">
+            Mengukum Tergugat untuk membayar kepada Penggugat sebelum Tergugat mengambil Akta Cerai, berupa :
+            <ol>
+                <li th:if="${documentDto.iddahSupportAmount != null}">
+                    Nafkah selama masa iddah sejumlah
+                    <span th:text="${documentDto.iddahSupportAmount}">[...]</span>
+                </li>
+                <li th:if="${documentDto.mutahDescription != null}">
+                    Mut'ah berupa <span th:text="${documentDto.mutahDescription}">[...]</span>
+                </li>
+                <li th:if="${documentDto.maddiyahSupportAmount != null}">
+                    Nafkah terutang (madliyah) sejumlah
+                    <span th:text="${documentDto.maddiyahSupportAmount}">[...]</span>
+                </li>
+            </ol>
+        </li>
+        <li th:if="${documentDto.iddahSupportAmount != null or documentDto.mutahDescription != null or documentDto.maddiyahSupportAmount != null}">
+            Memerintahkan kepada Panitera Pengadilan Agama <span th:text="${documentDto.courtName}">...</span> untuk menyerahkan Akta Cerai Tergugat setelah Tergugat memenuhi isi dictum angka 3 (tiga) diatas.
+        </li>
+
+        <th:block th:if="${documentDto.propertyClaim != null}" th:object="${documentDto.propertyClaim}">
+            <li>
+                Menetapkan Harta Bersama (Gono-Gini) Penggugat dan Tergugat adalah:
+                <ol>
+                    <li th:each="prop : *{properties}" th:text="${prop.description}">
+                        [Deskripsi]
+                    </li>
+                </ol>
+            </li>
+            <li>
+                Menetapkan pembagian atas harta bersama tersebut <span th:text="*{divisionRequest}">[Pembagian]</span>.
+            </li>
+        </th:block>
+
+        <th:block th:if="${documentDto.childClaim != null}" th:object="${documentDto.childClaim}">
+            <li>
+                Menetapkan Penggugat sebagai pemegang hak asuh atas anak-anak yang bernama:
+                <ol>
+                    <li th:each="child : *{children}">
+                        <span th:text="${child.fullName}">[Nama]</span>, umur <span th:text="${child.age}">[Usia]</span>.
+                    </li>
+                </ol>
+            </li>
+            <li>
+                Menghukum Tergugat untuk memberikan nafkah pemeliharaan (hadlanah)
+                <span th:text="*{childCount}">[jml]</span> anak
+                sejumlah
+                <span th:text="*{monthlySupport}">[Biaya]</span>
+                setiap bulan yang diberikan melalui Penggugat terhitung sejak amar putusan dijatuhkan sampai anak-anak tersebut dewasa/mandiri dengan kenaikan sebesar 10 (sepuluh) persen setiap tahunnya.
+            </li>
+        </th:block>
+
+        <li>Membebankan biaya perkara ini sesuai peraturan yang berlaku.</li>
+    </ol>
+
+    <div class="section-title">Subsider:</div>
+    <p>Jika Majelis Hakim berpendapat lain, mohon putusan yang seadil-adilnya (ex aequo et bono);</p>
+
+    <p>Demikian gugatan ini diajukan, atas perhatiannya Penggugat mengucapkan terima kasih;</p>
+    <p>Wassalamu'alaikum Wr.Wb.</p>
+
+    <div class="signature-block">
+        Hormat Penggugat,
+        <div class="signature-space">Materai<br/>10.000</div>
+        <div class="signature-name" th:text="${documentDto.plaintiff.signName}">
+            [NAMA JELAS PENGGUGAT]
+        </div>
+    </div>
+
+</div> </body>
+</html>

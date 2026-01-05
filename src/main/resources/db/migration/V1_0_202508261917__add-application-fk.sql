@@ -6,6 +6,8 @@ ALTER TABLE bride ADD COLUMN IF NOT EXISTS application_id UUID NULL;
 
 ALTER TABLE marriage ADD COLUMN IF NOT EXISTS application_id UUID NULL;
 
+ALTER TABLE application ADD COLUMN IF NOT EXISTS document_path TEXT;
+
 ALTER TABLE groom ADD CONSTRAINT fk_groom_to_application FOREIGN KEY (application_id) REFERENCES application(id);
 
 ALTER TABLE bride ADD CONSTRAINT fk_bride_to_application FOREIGN KEY (application_id) REFERENCES application(id);

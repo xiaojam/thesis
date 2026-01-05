@@ -80,4 +80,24 @@ public interface ApplicationRepository extends CrudRepository<Application, UUID>
         AuthConstant.Role handlerRole,
         String handlerWorkplaceCode
     );
+
+    @Query(
+        value = """
+        select a.*
+        from application a
+        join bride b
+          on a.id = b.application_id
+        join groom g
+          on a.id = g.application_id
+        where b.identity_id = :brideIdentityId
+          and g.identity_id = :groomIdentityId
+          and a.type = :#{#type.name()}
+          and a.status != 'CANCELLED'
+          and a.deleted is false
+        order by a.created_at desc
+        limit 1
+        """,
+        nativeQuery = true
+    )
+    Optional<Application> findApplicationByBrideAndGroomIdentityId(String brideIdentityId, String groomIdentityId, ApplicationConstant.Type type);
 }

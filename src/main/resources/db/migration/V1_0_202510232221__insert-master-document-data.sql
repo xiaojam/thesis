@@ -15,7 +15,7 @@ LIMIT 1;
 INSERT INTO document_config (workplace_id, head_name, numbering_format, last_sequence, service_type, description)
 SELECT
     m.id,
-    'MACHRUSH ALIY, S.Kom., M.M.T.',
+    'Machrush Aliy, S.Kom., M.M.T.',
     '474.2/{{SEQ_3}}/DCK/{{ROMAN_MONTH}}/{{YYYY}}',
     0,
     'MARRIAGE',
@@ -44,7 +44,7 @@ SELECT
     'template-n1-groom.html'
 FROM document_config dc
 JOIN master m ON dc.workplace_id = m.id
-WHERE m.code = '3525151' AND dc.service_type = 'MARRIAGE'
+WHERE m.code = '35.25.15.2013' AND dc.service_type = 'MARRIAGE'
 LIMIT 1;
 
 INSERT INTO document_template (config_id, document_type, name, file_path)
@@ -55,7 +55,7 @@ SELECT
     'template-n1-bride.html'
 FROM document_config dc
 JOIN master m ON dc.workplace_id = m.id
-WHERE m.code = '3525151' AND dc.service_type = 'MARRIAGE'
+WHERE m.code = '35.25.15.2013' AND dc.service_type = 'MARRIAGE'
 LIMIT 1;
 
 INSERT INTO document_template (config_id, document_type, name, file_path)
@@ -66,7 +66,7 @@ SELECT
     'template-n2-groom.html'
 FROM document_config dc
 JOIN master m ON dc.workplace_id = m.id
-WHERE m.code = '3525151' AND dc.service_type = 'MARRIAGE'
+WHERE m.code = '35.25.15.2013' AND dc.service_type = 'MARRIAGE'
 LIMIT 1;
 
 INSERT INTO document_template (config_id, document_type, name, file_path)
@@ -77,7 +77,7 @@ SELECT
     'template-n2-bride.html'
 FROM document_config dc
 JOIN master m ON dc.workplace_id = m.id
-WHERE m.code = '3525151' AND dc.service_type = 'MARRIAGE'
+WHERE m.code = '35.25.15.2013' AND dc.service_type = 'MARRIAGE'
 LIMIT 1;
 
 INSERT INTO document_template (config_id, document_type, name, file_path)
@@ -88,7 +88,7 @@ SELECT
     'template-n4-groom.html'
 FROM document_config dc
 JOIN master m ON dc.workplace_id = m.id
-WHERE m.code = '3525151' AND dc.service_type = 'MARRIAGE'
+WHERE m.code = '35.25.15.2013' AND dc.service_type = 'MARRIAGE'
 LIMIT 1;
 
 INSERT INTO document_template (config_id, document_type, name, file_path)
@@ -99,7 +99,7 @@ SELECT
     'template-n4-bride.html'
 FROM document_config dc
 JOIN master m ON dc.workplace_id = m.id
-WHERE m.code = '3525151' AND dc.service_type = 'MARRIAGE'
+WHERE m.code = '35.25.15.2013' AND dc.service_type = 'MARRIAGE'
 LIMIT 1;
 
 INSERT INTO document_template (config_id, document_type, name, file_path)
@@ -110,7 +110,7 @@ SELECT
     'template-n5-groom.html'
 FROM document_config dc
 JOIN master m ON dc.workplace_id = m.id
-WHERE m.code = '3525151' AND dc.service_type = 'MARRIAGE'
+WHERE m.code = '35.25.15.2013' AND dc.service_type = 'MARRIAGE'
 LIMIT 1;
 
 INSERT INTO document_template (config_id, document_type, name, file_path)
@@ -121,7 +121,7 @@ SELECT
     'template-n5-bride.html'
 FROM document_config dc
 JOIN master m ON dc.workplace_id = m.id
-WHERE m.code = '3525151' AND dc.service_type = 'MARRIAGE'
+WHERE m.code = '35.25.15.2013' AND dc.service_type = 'MARRIAGE'
 LIMIT 1;
 
 INSERT INTO document_template (config_id, document_type, name, file_path)
@@ -132,7 +132,7 @@ SELECT
     'template-n6-groom.html'
 FROM document_config dc
 JOIN master m ON dc.workplace_id = m.id
-WHERE m.code = '3525151' AND dc.service_type = 'MARRIAGE'
+WHERE m.code = '35.25.15.2013' AND dc.service_type = 'MARRIAGE'
 LIMIT 1;
 
 INSERT INTO document_template (config_id, document_type, name, file_path)
@@ -143,7 +143,7 @@ SELECT
     'template-n6-bride.html'
 FROM document_config dc
 JOIN master m ON dc.workplace_id = m.id
-WHERE m.code = '3525151' AND dc.service_type = 'MARRIAGE'
+WHERE m.code = '35.25.15.2013' AND dc.service_type = 'MARRIAGE'
 LIMIT 1;
 
 INSERT INTO document_template (config_id, document_type, name, file_path)
@@ -154,7 +154,18 @@ SELECT
     'template-wn-bride.html'
 FROM document_config dc
 JOIN master m ON dc.workplace_id = m.id
-WHERE m.code = '3525151' AND dc.service_type = 'MARRIAGE'
+WHERE m.code = '35.25.15.2013' AND dc.service_type = 'MARRIAGE'
+LIMIT 1;
+
+INSERT INTO document_template (config_id, document_type, name, file_path)
+SELECT
+    dc.id,
+    'UPDATE_HISTORY',
+    'Riwayat Perubahan Data',
+    'template-update-history.html'
+FROM document_config dc
+JOIN master m ON dc.workplace_id = m.id
+WHERE m.code = '35.25.15.2013' AND dc.service_type = 'MARRIAGE'
 LIMIT 1;
 
 INSERT INTO document_template (config_id, document_type, name, file_path)

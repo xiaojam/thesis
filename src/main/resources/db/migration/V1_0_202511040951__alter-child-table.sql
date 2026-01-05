@@ -1,0 +1,2 @@
+ALTER TABLE child_claim
+    ADD COLUMN claimed BOOLEAN DEFAULT FALSE;

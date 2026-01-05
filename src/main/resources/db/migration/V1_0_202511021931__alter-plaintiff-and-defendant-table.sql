@@ -1,0 +1,6 @@
+ALTER TABLE plaintiff
+    ADD COLUMN gender TEXT NULL DEFAULT 'FEMALE',
+    ADD COLUMN father_name TEXT NULL;
+ALTER TABLE defendant
+    ADD COLUMN gender TEXT NULL DEFAULT 'MALE',
+    ADD COLUMN father_name TEXT NULL;;

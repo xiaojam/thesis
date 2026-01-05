@@ -85,4 +85,9 @@ public class UserServiceImpl implements UserService, UserDetailsService {
     private UserDetail findUserByUsername(String username) {
         return this.userRepository.findFirstByUsernameAndDeletedFalse(username).orElse(null);
     }
+
+    @Override
+    public UserDetail findByUsername(String username) {
+        return this.userRepository.findFirstByUsernameAndDeletedFalse(username).orElse(null);
+    }
 }

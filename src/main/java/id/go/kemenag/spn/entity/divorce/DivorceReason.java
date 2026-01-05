@@ -7,6 +7,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDate;
+import java.util.List;
 import java.util.UUID;
 
 @Data
@@ -25,15 +27,17 @@ public class DivorceReason extends BaseEntity {
     @JoinColumn(name = "divorce_case_id")
     private DivorceCase divorceCase;
 
-    @Column(name = "initial_situation", columnDefinition = "TEXT")
-    private String initialSituation;
+    @Column(name = "conflict_start_date")
+    private LocalDate conflictStartDate;
 
-    @Column(name = "conflict_reason", columnDefinition = "TEXT")
-    private String conflictReason;
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "divorce_conflict_causes", joinColumns = @JoinColumn(name = "reason_id"))
+    @Column(name = "cause")
+    private List<String> conflictCauses;
 
-    @Column(name = "reconciliation_attempt", columnDefinition = "TEXT")
-    private String reconciliationAttempt;
+    @Column(name = "conflict_climax_date")
+    private LocalDate conflictClimaxDate;
 
-    @Column(name = "current_condition", columnDefinition = "TEXT")
-    private String currentCondition;
+    @Column(name = "separation_date")
+    private LocalDate separationDate;
 }

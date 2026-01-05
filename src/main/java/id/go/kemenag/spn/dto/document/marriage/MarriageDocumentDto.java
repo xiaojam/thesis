@@ -1,9 +1,12 @@
-package id.go.kemenag.spn.dto.document;
+package id.go.kemenag.spn.dto.document.marriage;
 
+import id.go.kemenag.spn.dto.document.updatehistory.UpdateHistoryDto;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import java.util.List;
 
 @Data
 @Builder
@@ -34,4 +37,6 @@ public class MarriageDocumentDto {
     private GroomDocumentDataDto groomDocumentData;
 
     private BrideDocumentDataDto brideDocumentData;
+
+    private List<UpdateHistoryDto> histories;
 }

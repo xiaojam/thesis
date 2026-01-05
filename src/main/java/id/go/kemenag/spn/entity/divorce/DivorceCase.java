@@ -72,4 +72,19 @@ public class DivorceCase extends BaseEntity {
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
     private Set<CaseSchedule> schedules = new HashSet<>();
+
+    @Column
+    private String reconciliationAttemptDescription;
+
+    @Column
+    private Double iddahSupportAmount;
+
+    @Column
+    private String mutahDescription;
+
+    @Column
+    private Double maddiyahSupportAmount;
+
+    @Column
+    private Integer maddiyahDurationInMonths;
 }

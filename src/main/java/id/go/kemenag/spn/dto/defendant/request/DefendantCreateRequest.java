@@ -33,6 +33,12 @@ public class DefendantCreateRequest {
     @JsonProperty("age")
     private Integer age;
 
+    @JsonProperty("gender")
+    private DivorceConstant.Gender gender;
+
+    @JsonProperty("father_name")
+    private String fatherName;
+
     @JsonProperty("religion")
     private DivorceConstant.Religion religion;
 
@@ -53,6 +59,9 @@ public class DefendantCreateRequest {
 
     @JsonProperty("job")
     private String job;
+
+    @JsonProperty("salary")
+    private Double salary;
 
     @JsonProperty("phone_number")
     private String phoneNumber;

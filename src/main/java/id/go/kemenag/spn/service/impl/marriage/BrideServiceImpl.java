@@ -4,6 +4,7 @@ import id.go.kemenag.spn.entity.marriage.Bride;
 import id.go.kemenag.spn.entity.marriage.BrideFather;
 import id.go.kemenag.spn.entity.marriage.BrideMother;
 import id.go.kemenag.spn.mapper.BrideFatherMapper;
+import id.go.kemenag.spn.repository.marriage.BrideFatherRepository;
 import id.go.kemenag.spn.repository.marriage.BrideMotherRepository;
 import id.go.kemenag.spn.repository.marriage.BrideRepository;
 import id.go.kemenag.spn.service.marriage.BrideService;
@@ -23,10 +24,10 @@ public class BrideServiceImpl implements BrideService {
     private BrideRepository brideRepository;
 
     @Autowired
-    private BrideFatherMapper brideFatherMapper;
+    private BrideMotherRepository brideMotherRepository;
 
     @Autowired
-    private BrideMotherRepository brideMotherRepository;
+    private BrideFatherRepository brideFatherRepository;
 
     @Override
     public Bride save(Bride bride) {
@@ -35,12 +36,12 @@ public class BrideServiceImpl implements BrideService {
 
     @Override
     public BrideFather save(BrideFather brideFather) {
-        return null;
+        return this.brideFatherRepository.save(brideFather);
     }
 
     @Override
     public BrideMother save(BrideMother brideMother) {
-        return null;
+        return this.brideMotherRepository.save(brideMother);
     }
 
     @Override

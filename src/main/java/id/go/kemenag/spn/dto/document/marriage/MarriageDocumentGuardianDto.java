@@ -1,4 +1,4 @@
-package id.go.kemenag.spn.dto.document;
+package id.go.kemenag.spn.dto.document.marriage;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -9,16 +9,16 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class MarriageDocumentGroomDto {
+public class MarriageDocumentGuardianDto {
+    private String status;
     private String fullName;
+    private String fatherName;
     private String identityId;
-    private String gender;
     private String birth;
     private String nationality;
-    private String maritalStatus;
     private String religion;
     private String job;
     private String address;
-    private String previousPartnerName;
-    private String signName;
+    private String reason;
+    private String relationship;
 }

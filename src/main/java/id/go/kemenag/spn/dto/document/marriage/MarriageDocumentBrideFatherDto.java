@@ -1,4 +1,4 @@
-package id.go.kemenag.spn.dto.document;
+package id.go.kemenag.spn.dto.document.marriage;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
